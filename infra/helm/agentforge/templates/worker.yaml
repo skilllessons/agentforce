@@ -1,0 +1,66 @@
+{{- if .Values.worker.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-worker
+  labels: {{- include "agentforge.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.worker.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: worker
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: worker
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.worker.terminationGracePeriodSeconds }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: worker
+          image: {{ include "agentforge.image" (dict "Values" .Values "global" .Values.global "component" "worker") }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - { name: http, containerPort: 3001 }
+          {{- include "agentforge.envFrom" . | nindent 10 }}
+          resources: {{- toYaml .Values.worker.resources | nindent 12 }}
+          startupProbe: { httpGet: { path: /healthz, port: http }, failureThreshold: 30, periodSeconds: 2 }
+          readinessProbe: { httpGet: { path: /readyz, port: http }, periodSeconds: 5 }
+          livenessProbe: { httpGet: { path: /healthz, port: http }, periodSeconds: 15 }
+          lifecycle:
+            preStop:
+              exec: { command: ["/bin/sh", "-c", "sleep 30"] }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - { name: tmp, emptyDir: {} }
+{{- if .Values.worker.autoscaling.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Release.Name }}-worker
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Release.Name }}-worker
+  minReplicas: {{ .Values.worker.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.worker.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: {{ .Values.worker.autoscaling.targetCPUUtilization }} }
+{{- end }}
+{{- end }}

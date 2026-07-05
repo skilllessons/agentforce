@@ -1,0 +1,97 @@
+[project]
+name = "agentforge"
+version = "0.1.0"
+description = "Vercel for research agents — domain-specific deep research platform"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Proprietary" }
+authors = [{ name = "AgentForge" }]
+
+dependencies = [
+  "anthropic>=0.40,<1.0",
+  "litellm>=1.55.0",
+  "fastapi>=0.115.0",
+  "uvicorn[standard]>=0.32.0",
+  "httpx>=0.27.0",
+  "redis>=5.2.0",
+  "asyncpg>=0.30.0",
+  "pydantic>=2.9.0",
+  "pydantic-settings>=2.6.0",
+  "python-multipart>=0.0.20",
+  "structlog>=24.4.0",
+  "opentelemetry-api>=1.27.0",
+  "opentelemetry-sdk>=1.27.0",
+  "opentelemetry-exporter-otlp-proto-http>=1.27.0",
+  "beautifulsoup4>=4.12.3",
+  "lxml>=5.3.0",
+  "pdfplumber>=0.11.4",
+  "aioboto3>=13.2.0",
+  "nanoid>=2.0.0",
+  "python-dotenv>=1.0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3.3",
+  "pytest-asyncio>=0.24.0",
+  "pytest-cov>=6.0.0",
+  "respx>=0.21.1",
+  "ruff>=0.7.4",
+  "mypy>=1.13.0",
+  "types-beautifulsoup4>=4.12.0",
+]
+
+[project.scripts]
+agentforge = "agentforge.platform.cli.main:main"
+agentforge-api = "agentforge.platform.api_gateway.main:run"
+agentforge-worker = "agentforge.platform.worker.main:main"
+agentforge-migrate = "agentforge.core.db.migrate:cli"
+agentforge-seed = "agentforge.core.db.seed:cli"
+agentforge-reap = "agentforge.platform.run_orchestrator.reaper:cli"
+agentforge-eval-insurance = "agentforge.verticals.insurance.eval.run_evals:cli"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agentforge"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "PIE", "SIM", "RUF", "ASYNC"]
+ignore = ["E501"]  # line length handled by formatter
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["B", "SIM", "N811", "N815"]
+# event models map 1:1 to JSON wire shapes (camelCase by design)
+"src/agentforge/core/runtime/events.py" = ["N815"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+disallow_untyped_decorators = false  # FastAPI/pydantic decorators
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["aioboto3.*", "pdfplumber.*", "nanoid.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+# One shared event loop for all async tests + fixtures, so the module-level
+# asyncpg pool singleton isn't bound to a dead per-test loop.
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+testpaths = ["tests"]
+addopts = "-ra --strict-markers --strict-config"
+filterwarnings = ["error", "ignore::DeprecationWarning:botocore.*"]
+
+[tool.coverage.run]
+source = ["src/agentforge"]
+branch = true

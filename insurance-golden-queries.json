@@ -1,0 +1,212 @@
+[
+  {
+    "persona": "underwriter",
+    "query": "Does a standard ISO CGL policy (CG 00 01) cover a data breach for a California SaaS company with 50 employees?",
+    "requiredKeywords": ["CGL", "exclusion", "cyber", "California", "ISO"],
+    "mustHaveFlag": true,
+    "maxConfidence": "medium"
+  },
+  {
+    "persona": "underwriter",
+    "query": "What are the standard exclusions in a commercial property policy for flood damage in a FEMA Zone AE property?",
+    "requiredKeywords": ["NFIP", "flood exclusion", "Zone AE", "FEMA"],
+    "mustHaveFlag": false,
+    "maxConfidence": "high"
+  },
+  {
+    "persona": "underwriter",
+    "query": "What is the minimum E&O coverage required for a licensed insurance broker in Texas?",
+    "requiredKeywords": ["Texas", "E&O", "TDI", "professional liability"],
+    "mustHaveFlag": false,
+    "maxConfidence": "high"
+  },
+  {
+    "persona": "underwriter",
+    "query": "How does the ISO CG 21 07 electronic data exclusion endorsement affect standard CGL coverage?",
+    "requiredKeywords": ["CG 21 07", "electronic data", "exclusion", "CGL"],
+    "mustHaveFlag": false,
+    "maxConfidence": "high"
+  },
+  {
+    "persona": "underwriter",
+    "query": "What are the admitted carriers for commercial umbrella in Florida with AM Best rating A or better?",
+    "requiredKeywords": ["Florida", "admitted", "umbrella", "AM Best"],
+    "mustHaveFlag": false,
+    "maxConfidence": "medium"
+  },
+  {
+    "persona": "underwriter",
+    "query": "What does the ISO BOP policy (BP 00 03) cover for business interruption and what are the standard waiting periods?",
+    "requiredKeywords": ["BP 00 03", "business interruption", "waiting period", "BOP"],
+    "mustHaveFlag": false,
+    "maxConfidence": "high"
+  },
+  {
+    "persona": "underwriter",
+    "query": "What is the difference between occurrence and claims-made forms for professional liability coverage?",
+    "requiredKeywords": ["occurrence", "claims-made", "professional liability", "tail coverage"],
+    "mustHaveFlag": false,
+    "maxConfidence": "high"
+  },
+  {
+    "persona": "underwriter",
+    "query": "What are the key underwriting considerations for a cannabis dispensary in Colorado seeking general liability coverage?",
+    "requiredKeywords": ["cannabis", "Colorado", "surplus lines", "general liability"],
+    "mustHaveFlag": true,
+    "maxConfidence": "medium"
+  },
+  {
+    "persona": "adjuster",
+    "query": "What documentation is required to support a business interruption claim under a standard ISO commercial property policy?",
+    "requiredKeywords": ["business interruption", "documentation", "actual loss sustained", "period of restoration"],
+    "mustHaveFlag": false,
+    "maxConfidence": "high"
+  },
+  {
+    "persona": "adjuster",
+    "query": "What is the statute of limitations for filing a property insurance claim in New York after a covered loss?",
+    "requiredKeywords": ["New York", "statute of limitations", "proof of loss"],
+    "mustHaveFlag": true,
+    "maxConfidence": "high"
+  },
+  {
+    "persona": "adjuster",
+    "query": "What are the Texas Department of Insurance requirements for prompt payment of a commercial property claim?",
+    "requiredKeywords": ["Texas", "TDI", "prompt payment", "15 days"],
+    "mustHaveFlag": false,
+    "maxConfidence": "high"
+  },
+  {
+    "persona": "adjuster",
+    "query": "How is actual cash value calculated for a hail-damaged roof under a replacement cost value policy with depreciation?",
+    "requiredKeywords": ["ACV", "RCV", "depreciation", "hail"],
+    "mustHaveFlag": false,
+    "maxConfidence": "high"
+  },
+  {
+    "persona": "adjuster",
+    "query": "What are the rights of a subrogation claimant under Texas property insurance law?",
+    "requiredKeywords": ["subrogation", "Texas", "made whole doctrine"],
+    "mustHaveFlag": true,
+    "maxConfidence": "medium"
+  },
+  {
+    "persona": "adjuster",
+    "query": "What is the coverage territory under a standard ISO CGL for a US company whose employee causes damage while working in Canada?",
+    "requiredKeywords": ["coverage territory", "Canada", "CGL", "ISO"],
+    "mustHaveFlag": false,
+    "maxConfidence": "medium"
+  },
+  {
+    "persona": "adjuster",
+    "query": "What is the difference between appraisal and arbitration clauses in a commercial property policy?",
+    "requiredKeywords": ["appraisal", "arbitration", "dispute resolution"],
+    "mustHaveFlag": false,
+    "maxConfidence": "high"
+  },
+  {
+    "persona": "broker",
+    "query": "What cyber endorsements can be added to a standard CGL policy to close the electronic data exclusion gap for a mid-size law firm?",
+    "requiredKeywords": ["cyber endorsement", "electronic data", "CGL", "law firm"],
+    "mustHaveFlag": true,
+    "maxConfidence": "medium"
+  },
+  {
+    "persona": "broker",
+    "query": "Compare E&O and D&O coverage for a Series A SaaS startup with 20 employees raising venture capital.",
+    "requiredKeywords": ["E&O", "D&O", "SaaS", "professional liability", "directors officers"],
+    "mustHaveFlag": false,
+    "maxConfidence": "high"
+  },
+  {
+    "persona": "broker",
+    "query": "What is the minimum commercial auto coverage required for a fleet of 10 delivery vehicles operating in California?",
+    "requiredKeywords": ["California", "commercial auto", "minimum limits", "fleet"],
+    "mustHaveFlag": false,
+    "maxConfidence": "high"
+  },
+  {
+    "persona": "broker",
+    "query": "What coverage gaps exist in a standard homeowners policy (ISO HO 00 03) for a short-term rental property listed on Airbnb?",
+    "requiredKeywords": ["HO 00 03", "short-term rental", "Airbnb", "coverage gap", "business activity"],
+    "mustHaveFlag": true,
+    "maxConfidence": "high"
+  },
+  {
+    "persona": "broker",
+    "query": "What are the coverage differences between an ACORD 25 certificate holder and an additional insured endorsement?",
+    "requiredKeywords": ["ACORD 25", "certificate holder", "additional insured", "endorsement"],
+    "mustHaveFlag": false,
+    "maxConfidence": "high"
+  },
+  {
+    "persona": "broker",
+    "query": "What inland marine coverage options exist for a contractor who transports tools and equipment worth $200,000?",
+    "requiredKeywords": ["inland marine", "contractor equipment", "tools floater"],
+    "mustHaveFlag": false,
+    "maxConfidence": "medium"
+  },
+  {
+    "persona": "broker",
+    "query": "What is a wrap-up insurance program (OCIP/CCIP) and when is it appropriate for a construction project?",
+    "requiredKeywords": ["OCIP", "CCIP", "wrap-up", "construction"],
+    "mustHaveFlag": false,
+    "maxConfidence": "high"
+  },
+  {
+    "persona": "compliance",
+    "query": "What are the current Texas Department of Insurance requirements for surplus lines placement of a commercial property risk?",
+    "requiredKeywords": ["TDI", "surplus lines", "Texas", "declinations", "stamping fee"],
+    "mustHaveFlag": false,
+    "maxConfidence": "high"
+  },
+  {
+    "persona": "compliance",
+    "query": "What are the California DOI requirements for filing rate and form changes for a personal auto insurer?",
+    "requiredKeywords": ["California", "CDI", "rate filing", "Proposition 103", "prior approval"],
+    "mustHaveFlag": false,
+    "maxConfidence": "high"
+  },
+  {
+    "persona": "compliance",
+    "query": "What NAIC model regulations govern credit scoring in personal lines insurance underwriting?",
+    "requiredKeywords": ["NAIC", "credit scoring", "model regulation", "adverse action"],
+    "mustHaveFlag": false,
+    "maxConfidence": "medium"
+  },
+  {
+    "persona": "compliance",
+    "query": "What are the market conduct examination triggers used by state DOI regulators for personal lines insurers?",
+    "requiredKeywords": ["market conduct", "examination", "complaint ratio", "DOI"],
+    "mustHaveFlag": false,
+    "maxConfidence": "medium"
+  },
+  {
+    "persona": "compliance",
+    "query": "What disclosures are required when an insurer non-renews a commercial property policy in Florida?",
+    "requiredKeywords": ["Florida", "non-renewal", "notice", "days", "OIR"],
+    "mustHaveFlag": false,
+    "maxConfidence": "high"
+  },
+  {
+    "persona": "compliance",
+    "query": "What are the NAIC anti-concurrent causation clause model standards for property insurance?",
+    "requiredKeywords": ["anti-concurrent causation", "NAIC", "concurrent cause", "property"],
+    "mustHaveFlag": true,
+    "maxConfidence": "medium"
+  },
+  {
+    "persona": "compliance",
+    "query": "What are the federal and state requirements for offering COBRA continuation coverage after an employee termination?",
+    "requiredKeywords": ["COBRA", "continuation coverage", "60 days", "qualifying event"],
+    "mustHaveFlag": false,
+    "maxConfidence": "high"
+  },
+  {
+    "persona": "compliance",
+    "query": "What are the surplus lines tax rates and stamping office requirements for all 50 states?",
+    "requiredKeywords": ["surplus lines tax", "stamping office", "NIMA", "SLSAEF"],
+    "mustHaveFlag": false,
+    "maxConfidence": "medium"
+  }
+]

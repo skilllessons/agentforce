@@ -1,0 +1,40 @@
+# Keep Docker build context lean. Anything not needed inside an image
+# should be excluded.
+
+# Python build artifacts
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+.venv
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.coverage
+htmlcov
+
+# Frontend build artifacts (apps/studio/Dockerfile handles its own context)
+node_modules
+**/node_modules
+.next
+**/.next
+
+# Repo metadata
+.git
+.github
+.idea
+.vscode
+
+# Local secrets / state — never bake into images
+.env
+.env.*
+!.env.example
+
+# Infra is built from cluster, not from inside images
+infra
+pitch
+
+# Misc
+.DS_Store
+*.md
+!README.md

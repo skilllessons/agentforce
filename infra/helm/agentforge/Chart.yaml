@@ -1,0 +1,15 @@
+apiVersion: v2
+name: agentforge
+description: Vercel for research agents — domain-specific deep research platform
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - ai
+  - agents
+  - research
+  - llm
+home: https://agentforge.example.com
+maintainers:
+  - name: AgentForge
+    email: ops@agentforge.example.com

@@ -1,0 +1,38 @@
+# Local-dev infrastructure dependencies only.
+#
+# Application services (api-gateway, worker, migrate) run via `uv run` directly
+# during development — see the README. This compose file just stands up the
+# stateful dependencies the app needs (Postgres + Redis) so you can iterate
+# without touching AWS.
+#
+# Once the Python Dockerfiles exist, we'll add api-gateway/worker/migrate
+# services back here for the full local stack.
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    volumes: ["redis-data:/data"]
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: agentforge
+      POSTGRES_PASSWORD: agentforge
+      POSTGRES_DB: agentforge
+    ports: ["5433:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agentforge"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    volumes: ["postgres-data:/var/lib/postgresql/data"]
+
+volumes:
+  redis-data:
+  postgres-data:

@@ -1,0 +1,29 @@
+node_modules
+dist
+.next
+coverage
+*.log
+.env
+.env.local
+.env.*.local
+.DS_Store
+.turbo
+.pnpm-store
+*.tsbuildinfo
+.vscode/*
+!.vscode/extensions.json
+.idea
+tmp
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Generated eval reports (keep golden_queries.json + run_evals.py, ignore run outputs)
+src/agentforge/verticals/insurance/eval/reports/

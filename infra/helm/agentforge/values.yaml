@@ -1,0 +1,86 @@
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  domain:
+    api: api.agentforge.example.com
+    studio: studio.agentforge.example.com
+
+image:
+  repository: agentforge
+  tag: latest
+  pullPolicy: IfNotPresent
+
+apiGateway:
+  enabled: true
+  replicas: 2
+  resources:
+    requests: { cpu: 200m, memory: 256Mi }
+    limits:   { cpu: 1000m, memory: 768Mi }
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 20
+    targetCPUUtilization: 70
+  service:
+    port: 80
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    tls: true
+
+worker:
+  enabled: true
+  replicas: 3
+  resources:
+    requests: { cpu: 300m, memory: 512Mi }
+    limits:   { cpu: 1500m, memory: 1.5Gi }
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 50
+    targetCPUUtilization: 65
+  terminationGracePeriodSeconds: 120
+
+studio:
+  enabled: true
+  replicas: 2
+  resources:
+    requests: { cpu: 100m, memory: 192Mi }
+    limits:   { cpu: 500m, memory: 512Mi }
+  ingress:
+    enabled: true
+    className: nginx
+    tls: true
+
+redis:
+  enabled: true
+  storage: 5Gi
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits:   { cpu: 500m, memory: 640Mi }
+
+postgres:
+  enabled: true
+  storage: 20Gi
+  resources:
+    requests: { cpu: 200m, memory: 512Mi }
+    limits:   { cpu: 1000m, memory: 1Gi }
+
+otelCollector:
+  enabled: true
+
+config:
+  NODE_ENV: production
+  LOG_LEVEL: info
+  ANTHROPIC_DEFAULT_MODEL: claude-opus-4-7
+  RATE_LIMIT_MAX: "60"
+  S3_BUCKET: agentforge-files
+  S3_REGION: us-east-1
+  MAX_UPLOAD_BYTES: "33554432"
+
+# Prefer external-secrets / sealed-secrets in real deployments.
+secrets:
+  create: false
+  values: {}

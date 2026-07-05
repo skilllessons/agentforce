@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-config
+  labels: {{- include "agentforge.labels" . | nindent 4 }}
+data:
+  REDIS_URL: "redis://{{ .Release.Name }}-redis:6379"
+  DATABASE_URL: "postgresql://agentforge:agentforge@{{ .Release.Name }}-postgres:5432/agentforge"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://{{ .Release.Name }}-otel-collector:4318"
+  OTEL_SERVICE_NAME: "agentforge"
+  API_GATEWAY_PORT: "3000"
+  WORKER_PORT: "3001"
+  {{- range $k, $v := .Values.config }}
+  {{ $k }}: {{ $v | quote }}
+  {{- end }}

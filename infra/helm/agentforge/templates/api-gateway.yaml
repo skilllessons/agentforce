@@ -1,0 +1,99 @@
+{{- if .Values.apiGateway.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-api-gateway
+  labels: {{- include "agentforge.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.apiGateway.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: api-gateway
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: api-gateway
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: api-gateway
+          image: {{ include "agentforge.image" (dict "Values" .Values "global" .Values.global "component" "api-gateway") }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - { name: http, containerPort: 3000 }
+          {{- include "agentforge.envFrom" . | nindent 10 }}
+          resources: {{- toYaml .Values.apiGateway.resources | nindent 12 }}
+          startupProbe: { httpGet: { path: /healthz, port: http }, failureThreshold: 30, periodSeconds: 2 }
+          readinessProbe: { httpGet: { path: /readyz, port: http }, periodSeconds: 5 }
+          livenessProbe: { httpGet: { path: /healthz, port: http }, periodSeconds: 15 }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - { name: tmp, emptyDir: {} }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-api-gateway
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: api-gateway
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - { name: http, port: {{ .Values.apiGateway.service.port }}, targetPort: 3000 }
+{{- if .Values.apiGateway.autoscaling.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Release.Name }}-api-gateway
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Release.Name }}-api-gateway
+  minReplicas: {{ .Values.apiGateway.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.apiGateway.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: {{ .Values.apiGateway.autoscaling.targetCPUUtilization }} }
+{{- end }}
+{{- if .Values.apiGateway.ingress.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-api-gateway
+  annotations: {{- toYaml .Values.apiGateway.ingress.annotations | nindent 4 }}
+spec:
+  ingressClassName: {{ .Values.apiGateway.ingress.className }}
+  {{- if .Values.apiGateway.ingress.tls }}
+  tls:
+    - hosts: ["{{ .Values.global.domain.api }}"]
+      secretName: {{ .Release.Name }}-api-tls
+  {{- end }}
+  rules:
+    - host: {{ .Values.global.domain.api }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Release.Name }}-api-gateway
+                port: { number: {{ .Values.apiGateway.service.port }} }
+{{- end }}
+{{- end }}

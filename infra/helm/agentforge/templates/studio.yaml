@@ -1,0 +1,84 @@
+{{- if .Values.studio.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-studio
+  labels: {{- include "agentforge.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.studio.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: studio
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: studio
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: studio
+          image: {{ include "agentforge.image" (dict "Values" .Values "global" .Values.global "component" "studio") }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - { name: http, containerPort: 3000 }
+          env:
+            - { name: NEXT_PUBLIC_API_URL, value: "https://{{ .Values.global.domain.api }}" }
+            - { name: PORT, value: "3000" }
+          resources: {{- toYaml .Values.studio.resources | nindent 12 }}
+          readinessProbe: { httpGet: { path: /, port: http }, periodSeconds: 5 }
+          livenessProbe: { httpGet: { path: /, port: http }, periodSeconds: 15 }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - { name: cache, mountPath: /app/.next/cache }
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - { name: cache, emptyDir: {} }
+        - { name: tmp, emptyDir: {} }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-studio
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: studio
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - { name: http, port: 80, targetPort: 3000 }
+{{- if .Values.studio.ingress.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-studio
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: {{ .Values.studio.ingress.className }}
+  {{- if .Values.studio.ingress.tls }}
+  tls:
+    - hosts: ["{{ .Values.global.domain.studio }}"]
+      secretName: {{ .Release.Name }}-studio-tls
+  {{- end }}
+  rules:
+    - host: {{ .Values.global.domain.studio }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Release.Name }}-studio
+                port: { number: 80 }
+{{- end }}
+{{- end }}

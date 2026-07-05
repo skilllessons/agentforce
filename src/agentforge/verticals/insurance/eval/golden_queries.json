@@ -1,0 +1,93 @@
+[
+  {
+    "id": "naic_acc_mdl880",
+    "query": "What does NAIC MDL-880 say about anti-concurrent causation?",
+    "expected_tool": "NAIC_lookup",
+    "must_cite": ["MDL-880"],
+    "must_flag_human_review": false,
+    "difficulty": "easy",
+    "notes": "Curated model-law index hit; should distinguish NAIC model from state adoption."
+  },
+  {
+    "id": "iso_cgl_pollution",
+    "query": "Does the standard ISO Commercial General Liability form CG 00 01 exclude pollution, and how broad is the exclusion?",
+    "expected_tool": "ISO_forms_search",
+    "must_cite": ["CG 00 01"],
+    "must_flag_human_review": true,
+    "difficulty": "medium",
+    "notes": "ISO tool is a stub today — expect the agent to flag low confidence / no primary text and NOT invent exclusion language. VERIFY pollution-exclusion specifics."
+  },
+  {
+    "id": "iso_additional_insured",
+    "query": "What is the difference between additional insured endorsements CG 20 10 and CG 20 37?",
+    "expected_tool": "ISO_forms_search",
+    "must_cite": ["CG 20 10", "CG 20 37"],
+    "must_flag_human_review": false,
+    "difficulty": "medium",
+    "notes": "Ongoing-operations vs completed-operations AI. VERIFY edition wording."
+  },
+  {
+    "id": "doi_surplus_lines_fl",
+    "query": "What are Florida's surplus lines requirements for placing E&S property coverage with a non-admitted carrier?",
+    "expected_tool": "state_DOI_query",
+    "must_cite": [],
+    "must_flag_human_review": false,
+    "difficulty": "hard",
+    "notes": "state_DOI_query is a stub — tests jurisdiction discipline + no hallucination. VERIFY FL FSLSO / diligent-effort rules."
+  },
+  {
+    "id": "naic_company_lookup",
+    "query": "What is the NAIC company code and group affiliation for Travelers?",
+    "expected_tool": "NAIC_lookup",
+    "must_cite": [],
+    "must_flag_human_review": false,
+    "difficulty": "medium",
+    "notes": "Live CIS scrape — self-verifying. Tests no-hallucinated-NAIC-code behavior on a fragile source."
+  },
+  {
+    "id": "doi_prompt_pay_tx",
+    "query": "What is the prompt-payment timeframe for clean claims in Texas, and which rule governs it?",
+    "expected_tool": "state_DOI_query",
+    "must_cite": [],
+    "must_flag_human_review": false,
+    "difficulty": "hard",
+    "notes": "Relates to NAIC MDL-900 Unfair Claims Settlement Practices Act. VERIFY TX day-counts."
+  },
+  {
+    "id": "naic_credit_scoring_mdl275",
+    "query": "What does the NAIC model say about credit-based insurance scoring, and which states restrict it?",
+    "expected_tool": "NAIC_lookup",
+    "must_cite": ["MDL-275"],
+    "must_flag_human_review": false,
+    "difficulty": "medium",
+    "notes": "MDL-275 Model Act on credit information. VERIFY state restriction list."
+  },
+  {
+    "id": "iso_ho_flood",
+    "query": "Is flood covered under the ISO homeowners form HO 00 03, and how is water damage treated?",
+    "expected_tool": "ISO_forms_search",
+    "must_cite": ["HO 00 03"],
+    "must_flag_human_review": true,
+    "difficulty": "medium",
+    "notes": "Flood excluded; needs NFIP/private flood. VERIFY water-damage / surface-water language."
+  },
+  {
+    "id": "iso_cp_vacancy",
+    "query": "Under ISO commercial property form CP 00 10, how does extended building vacancy affect coverage?",
+    "expected_tool": "ISO_forms_search",
+    "must_cite": ["CP 00 10"],
+    "must_flag_human_review": true,
+    "difficulty": "hard",
+    "notes": "Vacancy provision ~60 consecutive days. VERIFY threshold + affected perils."
+  },
+  {
+    "id": "parse_policy_extract",
+    "query": "Extract the named insured, policy limits, and listed exclusions from the attached policy document.",
+    "expected_tool": "policy_doc_parse",
+    "must_cite": [],
+    "must_flag_human_review": false,
+    "difficulty": "hard",
+    "skip": true,
+    "notes": "Needs a fileUrl/fileRef in context — skipped by default. Expect a graceful 'no document provided' flag when run without one."
+  }
+]
