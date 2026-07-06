@@ -1,14 +1,37 @@
 from __future__ import annotations
 import json
+import asyncio
+from fastapi.responses import StreamingResponse
 from fastapi import APIRouter, HTTPException
 from nanoid import generate as nanoid
-from agentforge.core.db.repos import runs
+from agentforge.core.db.repos import runs, run_events
 from agentforge.platform.run_orchestrator.queue import enqueue_run
 from agentforge.platform.api_gateway.schemas import RunRequest, RunAccepted, RunStatus
 
 
+_STREAM_TIMEOUT_S = 120     # stop streaming after this long (run cap is 90s)
+_POLL_INTERVAL_S = 0.5      # how often to re-check run_events
 router = APIRouter(prefix="/v1", tags=["runs"])
 
+def _sse(event: str, data: str) -> str:
+    return f"event: {event}\ndata: {data}\n\n"
+
+
+@router.get("/runs/{run_id}/stream")
+async def stream_run(run_id: str) -> StreamingResponse:
+    async def gen():
+        seen = 0
+        for _ in range(int(_STREAM_TIMEOUT_S / _POLL_INTERVAL_S)):
+            events = await run_events.list_for_run(run_id)
+            for e in events[seen:]:
+                yield _sse(e["kind"], e["payload"])
+                seen += 1
+                if e["kind"] in ("output", "error"):
+                    yield _sse("done", "{}")
+                    return
+            await asyncio.sleep(_POLL_INTERVAL_S)
+        yield _sse("done", "{}")
+    return StreamingResponse(gen(), media_type="text/event-stream")
 
 @router.post("/agents/{vertical}/run", status_code=202, response_model=RunAccepted)
 async def create_run(vertical: str, req: RunRequest) -> RunAccepted:
