@@ -2,7 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
+import { Paperclip, ArrowUp, Plus, Loader2, X } from 'lucide-react'
 import { ResultView } from '@/components/ResultView'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Textarea } from '@/components/ui/textarea'
 import {
   startRun,
   getRun,
@@ -28,7 +32,6 @@ const STATUS_LABEL: Record<string, string> = {
   failed: 'Failed',
 }
 
-// Query templates (prompt presets) — click to pre-fill, then fill the {blanks}.
 const TEMPLATES = [
   { label: 'Coverage check', text: 'Does ISO form {form} cover {peril} for a {state} {business}?' },
   { label: 'Model law', text: 'What does NAIC {MDL-NNN} say about {topic}?' },
@@ -37,6 +40,21 @@ const TEMPLATES = [
   { label: 'Carrier lookup', text: 'What is the NAIC company code and group for {carrier}?' },
 ]
 
+const TRACE_LABEL = (kind: string, tool?: string): string | null => {
+  switch (kind) {
+    case 'run_start':
+      return 'Started'
+    case 'tool_start':
+      return `Calling ${tool}`
+    case 'tool_result':
+      return `✓ ${tool}`
+    case 'synthesis_start':
+      return 'Synthesizing answer…'
+    default:
+      return null
+  }
+}
+
 interface Message {
   runId: string
   query: string
@@ -44,21 +62,6 @@ interface Message {
   output: ResearchOutput | null
   trace?: string[]
   meta?: { tools: number; cost: number; elapsed: number | null }
-}
-
-const TRACE_LABEL = (kind: string, tool?: string): string | null => {
-  switch (kind) {
-    case 'run_start':
-      return 'Started'
-    case 'tool_start':
-      return `🔧 ${tool}`
-    case 'tool_result':
-      return `✓ ${tool}`
-    case 'synthesis_start':
-      return '✍️ Synthesizing answer…'
-    default:
-      return null
-  }
 }
 
 export default function VerticalPage() {
@@ -75,33 +78,6 @@ export default function VerticalPage() {
   const threadRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
-
-  // Read picked image files as base64 for Claude vision.
-  const onFiles = (files: FileList | null) => {
-    if (!files) return
-    Array.from(files).slice(0, 4).forEach((f) => {
-      const reader = new FileReader()
-      reader.onload = () => {
-        const dataUrl = reader.result as string
-        const data = dataUrl.split(',')[1] // strip "data:image/png;base64,"
-        setImages((prev) => [...prev, { media_type: f.type, data, name: f.name }])
-      }
-      reader.readAsDataURL(f)
-    })
-  }
-
-  // Click a template → fill the input and select the first {blank} to type over.
-  const pickTemplate = (text: string) => {
-    setInput(text)
-    setHint('')
-    setTimeout(() => {
-      const el = inputRef.current
-      if (!el) return
-      el.focus()
-      const m = text.match(/\{[^}]+\}/)
-      if (m) el.setSelectionRange(m.index!, m.index! + m[0].length)
-    }, 0)
-  }
 
   useEffect(() => {
     listVerticals().then(({ verticals }) => {
@@ -121,6 +97,30 @@ export default function VerticalPage() {
   const setLast = (patch: Partial<Message>) =>
     setMessages((prev) => prev.map((m, i) => (i === prev.length - 1 ? { ...m, ...patch } : m)))
 
+  const pickTemplate = (text: string) => {
+    setInput(text)
+    setHint('')
+    setTimeout(() => {
+      const el = inputRef.current
+      if (!el) return
+      el.focus()
+      const m = text.match(/\{[^}]+\}/)
+      if (m) el.setSelectionRange(m.index!, m.index! + m[0].length)
+    }, 0)
+  }
+
+  const onFiles = (files: FileList | null) => {
+    if (!files) return
+    Array.from(files).slice(0, 4).forEach((f) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const data = (reader.result as string).split(',')[1]
+        setImages((prev) => [...prev, { media_type: f.type, data, name: f.name }])
+      }
+      reader.readAsDataURL(f)
+    })
+  }
+
   const newChat = () => {
     setThreadId(null)
     setMessages([])
@@ -130,7 +130,6 @@ export default function VerticalPage() {
   const submit = async () => {
     const q = input.trim()
     if (!q || busy) return
-    // Guard: don't spend a run on an unfilled template placeholder.
     if (/\{[^}]+\}/.test(q)) {
       setHint('Fill in the {…} placeholders before sending.')
       return
@@ -139,7 +138,6 @@ export default function VerticalPage() {
     setBusy(true)
     setInput('')
     try {
-      // Lazily open a thread on the first message of a conversation.
       let tid = threadId
       if (!tid) {
         tid = await createSession(vertical)
@@ -173,7 +171,6 @@ export default function VerticalPage() {
     }
   }
 
-  // Open a past conversation → replay its runs into the thread.
   const openSession = async (id: string) => {
     setThreadId(id)
     const runs = await getSessionRuns(id)
@@ -190,16 +187,16 @@ export default function VerticalPage() {
 
   return (
     <div className="flex h-full">
-      {/* ── LEFT SIDEBAR ─────────────────────────────── */}
-      <aside className="flex w-72 flex-col gap-6 overflow-y-auto border-r border-white/10 bg-[#171717] p-4">
+      {/* ── SIDEBAR ── */}
+      <aside className="flex w-64 flex-col gap-6 overflow-y-auto border-r border-border bg-card p-4">
         <div>
-          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Model
           </label>
           <select
             value={model}
             onChange={(e) => setModel(e.target.value)}
-            className="w-full rounded-lg border border-white/10 bg-[#0d0d0d] px-2 py-1.5 text-sm text-slate-200"
+            className="h-9 w-full rounded-lg border border-border bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           >
             {MODELS.map((m) => (
               <option key={m.id} value={m.id}>
@@ -210,12 +207,12 @@ export default function VerticalPage() {
         </div>
 
         <div>
-          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <div className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Connectors
           </div>
-          <ul className="space-y-1">
+          <ul className="space-y-1.5">
             {connectors.map((c) => (
-              <li key={c} className="flex items-center gap-2 text-sm text-slate-300">
+              <li key={c} className="flex items-center gap-2 text-sm text-foreground/80">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 {c}
               </li>
@@ -225,47 +222,49 @@ export default function VerticalPage() {
 
         <div className="flex-1">
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Conversations
             </span>
-            <button onClick={newChat} className="text-xs text-forge-400 hover:text-forge-300">
-              + New
-            </button>
+            <Button variant="ghost" size="sm" onClick={newChat} className="h-7 gap-1 px-2">
+              <Plus className="h-3.5 w-3.5" /> New
+            </Button>
           </div>
-          <ul className="space-y-1">
+          <ul className="space-y-0.5">
             {sessions.map((s) => (
               <li key={s.id}>
                 <button
                   onClick={() => openSession(s.id)}
-                  className={`w-full truncate rounded-lg px-2 py-1.5 text-left text-sm hover:bg-white/5 ${
-                    s.id === threadId ? 'bg-white/10 text-white' : 'text-slate-300'
-                  }`}
+                  className={cnActive(s.id === threadId)}
                   title={s.title ?? undefined}
                 >
                   {s.title ?? 'New conversation'}
                 </button>
               </li>
             ))}
-            {sessions.length === 0 && <li className="text-xs text-slate-500">No conversations yet</li>}
+            {sessions.length === 0 && (
+              <li className="px-2 text-xs text-muted-foreground">No conversations yet</li>
+            )}
           </ul>
         </div>
       </aside>
 
-      {/* ── MAIN CHAT ────────────────────────────────── */}
-      <main className="flex flex-1 flex-col bg-[#0d0d0d]">
+      {/* ── CHAT ── */}
+      <main className="flex flex-1 flex-col bg-background">
         <div ref={threadRef} className="flex-1 space-y-6 overflow-y-auto px-6 py-8">
           {messages.length === 0 && (
-            <div className="mx-auto mt-24 max-w-xl text-center text-slate-500">
-              <div className="text-lg font-medium capitalize text-slate-200">{vertical} agent</div>
-              <div className="mt-2 text-sm">
+            <div className="mx-auto mt-28 max-w-xl text-center">
+              <h2 className="font-serif text-3xl font-medium capitalize tracking-tight">
+                {vertical} agent
+              </h2>
+              <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
                 Ask a question — follow-ups keep the conversation context.
-              </div>
+              </p>
               <div className="mt-6 flex flex-wrap justify-center gap-2">
                 {TEMPLATES.map((t) => (
                   <button
                     key={t.label}
                     onClick={() => pickTemplate(t.text)}
-                    className="rounded-full border border-white/10 bg-[#171717] px-3 py-1.5 text-xs text-slate-300 transition hover:border-forge-500 hover:text-white"
+                    className="rounded-full border border-border bg-card px-3 py-1.5 text-xs text-foreground/80 transition-colors hover:border-primary hover:text-foreground"
                     title={t.text}
                   >
                     {t.label}
@@ -275,47 +274,48 @@ export default function VerticalPage() {
             </div>
           )}
           {messages.map((m, i) => (
-            <div key={i} className="mx-auto max-w-3xl space-y-4">
+            <div key={i} className="mx-auto max-w-3xl space-y-3">
               <div className="flex justify-end">
-                <div className="max-w-[80%] rounded-2xl bg-forge-500 px-4 py-2 text-sm text-white">
+                <div className="max-w-[80%] rounded-2xl bg-primary px-4 py-2.5 text-sm text-primary-foreground">
                   {m.query}
                 </div>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-[#171717] p-4">
-                {!m.output ? (
-                  <div className="space-y-1.5">
-                    <div className="flex items-center gap-2 text-sm text-slate-400">
-                      {(m.status === 'queued' || m.status === 'running') && (
-                        <span className="h-2 w-2 animate-pulse rounded-full bg-forge-500" />
-                      )}
-                      {STATUS_LABEL[m.status] ?? m.status}
-                    </div>
-                    {m.trace && m.trace.length > 0 && (
-                      <ul className="space-y-0.5 pl-4 text-xs text-slate-500">
-                        {m.trace.map((t, j) => (
-                          <li key={j} className="font-mono">
-                            {t}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                ) : (
-                  <>
-                    {m.meta && (
-                      <div className="mb-3 text-xs text-slate-500">
-                        {m.meta.tools} tool calls · {m.meta.elapsed?.toFixed(1)}s · $
-                        {m.meta.cost.toFixed(4)}
+              <Card>
+                <CardContent>
+                  {!m.output ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        {(m.status === 'queued' || m.status === 'running') && (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                        )}
+                        {STATUS_LABEL[m.status] ?? m.status}
                       </div>
-                    )}
-                    <ResultView output={m.output} />
-                  </>
-                )}
-              </div>
+                      {m.trace && m.trace.length > 0 && (
+                        <ul className="space-y-1 border-l border-border pl-3 text-xs text-muted-foreground">
+                          {m.trace.map((t, j) => (
+                            <li key={j}>{t}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      {m.meta && (
+                        <div className="mb-3 text-xs text-muted-foreground">
+                          {m.meta.tools} tool calls · {m.meta.elapsed?.toFixed(1)}s · $
+                          {m.meta.cost.toFixed(4)}
+                        </div>
+                      )}
+                      <ResultView output={m.output} />
+                    </>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           ))}
         </div>
 
+        {/* input */}
         <div className="px-6 pb-6 pt-2">
           {hint && (
             <div className="mx-auto mb-2 max-w-3xl text-center text-xs text-amber-400">{hint}</div>
@@ -325,20 +325,20 @@ export default function VerticalPage() {
               {images.map((img, i) => (
                 <span
                   key={i}
-                  className="flex items-center gap-1 rounded-lg border border-white/10 bg-[#171717] px-2 py-1 text-xs text-slate-300"
+                  className="flex items-center gap-1 rounded-lg border border-border bg-card px-2 py-1 text-xs text-foreground/80"
                 >
                   🖼 {img.name}
                   <button
                     onClick={() => setImages((prev) => prev.filter((_, j) => j !== i))}
-                    className="ml-1 text-slate-500 hover:text-white"
+                    className="text-muted-foreground hover:text-foreground"
                   >
-                    ✕
+                    <X className="h-3 w-3" />
                   </button>
                 </span>
               ))}
             </div>
           )}
-          <div className="mx-auto flex max-w-3xl items-end gap-2 rounded-2xl border border-white/10 bg-[#171717] p-2 shadow-lg">
+          <div className="mx-auto flex max-w-3xl items-end gap-2 rounded-2xl border border-border bg-card p-2 shadow-lg">
             <input
               ref={fileRef}
               type="file"
@@ -347,14 +347,10 @@ export default function VerticalPage() {
               hidden
               onChange={(e) => onFiles(e.target.files)}
             />
-            <button
-              onClick={() => fileRef.current?.click()}
-              className="rounded-lg px-2 py-2 text-slate-400 hover:bg-white/5 hover:text-white"
-              title="Attach image"
-            >
-              📎
-            </button>
-            <textarea
+            <Button variant="ghost" size="icon" onClick={() => fileRef.current?.click()} title="Attach image">
+              <Paperclip className="h-4 w-4" />
+            </Button>
+            <Textarea
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -365,19 +361,21 @@ export default function VerticalPage() {
                 }
               }}
               rows={1}
-              placeholder="Ask the insurance agent…"
-              className="flex-1 resize-none bg-transparent px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
+              placeholder={`Ask the ${vertical} agent…`}
+              className="max-h-40 min-h-[2.5rem] py-2.5"
             />
-            <button
-              onClick={submit}
-              disabled={busy || !input.trim()}
-              className="rounded-xl bg-forge-500 px-5 py-3 text-sm font-medium text-white hover:bg-forge-600 disabled:opacity-40"
-            >
-              {busy ? '…' : 'Send'}
-            </button>
+            <Button size="icon" onClick={submit} disabled={busy || !input.trim()} title="Send">
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" />}
+            </Button>
           </div>
         </div>
       </main>
     </div>
   )
+}
+
+function cnActive(active: boolean): string {
+  return `w-full truncate rounded-lg px-2 py-2 text-left text-sm transition-colors ${
+    active ? 'bg-accent text-foreground' : 'text-foreground/70 hover:bg-accent/50'
+  }`
 }
