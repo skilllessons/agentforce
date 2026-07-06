@@ -6,6 +6,7 @@ import { ResultView } from '@/components/ResultView'
 import {
   startRun,
   getRun,
+  getRunEvents,
   listVerticals,
   createSession,
   listSessions,
@@ -41,7 +42,23 @@ interface Message {
   query: string
   status: string
   output: ResearchOutput | null
+  trace?: string[]
   meta?: { tools: number; cost: number; elapsed: number | null }
+}
+
+const TRACE_LABEL = (kind: string, tool?: string): string | null => {
+  switch (kind) {
+    case 'run_start':
+      return 'Started'
+    case 'tool_start':
+      return `🔧 ${tool}`
+    case 'tool_result':
+      return `✓ ${tool}`
+    case 'synthesis_start':
+      return '✍️ Synthesizing answer…'
+    default:
+      return null
+  }
 }
 
 export default function VerticalPage() {
@@ -54,8 +71,24 @@ export default function VerticalPage() {
   const [input, setInput] = useState('')
   const [hint, setHint] = useState('')
   const [busy, setBusy] = useState(false)
+  const [images, setImages] = useState<{ media_type: string; data: string; name: string }[]>([])
   const threadRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  // Read picked image files as base64 for Claude vision.
+  const onFiles = (files: FileList | null) => {
+    if (!files) return
+    Array.from(files).slice(0, 4).forEach((f) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const dataUrl = reader.result as string
+        const data = dataUrl.split(',')[1] // strip "data:image/png;base64,"
+        setImages((prev) => [...prev, { media_type: f.type, data, name: f.name }])
+      }
+      reader.readAsDataURL(f)
+    })
+  }
 
   // Click a template → fill the input and select the first {blank} to type over.
   const pickTemplate = (text: string) => {
@@ -112,11 +145,16 @@ export default function VerticalPage() {
         tid = await createSession(vertical)
         setThreadId(tid)
       }
-      const { run_id } = await startRun({ vertical, query: q, threadId: tid })
+      const imgs = images.map((i) => ({ media_type: i.media_type, data: i.data }))
+      const { run_id } = await startRun({ vertical, query: q, threadId: tid, images: imgs })
+      setImages([])
       setMessages((prev) => [...prev, { runId: run_id, query: q, status: 'queued', output: null }])
-      for (let i = 0; i < 80; i++) {
-        const run = await getRun(run_id)
-        setLast({ status: run.status })
+      for (let i = 0; i < 120; i++) {
+        const [run, events] = await Promise.all([getRun(run_id), getRunEvents(run_id)])
+        const trace = events
+          .map((e) => TRACE_LABEL(e.kind, e.payload.tool as string | undefined))
+          .filter((x): x is string => x !== null)
+        setLast({ status: run.status, trace })
         if (run.status === 'completed' && run.result) {
           setLast({
             output: run.result,
@@ -125,7 +163,7 @@ export default function VerticalPage() {
           break
         }
         if (run.status === 'failed') break
-        await new Promise((r) => setTimeout(r, 1500))
+        await new Promise((r) => setTimeout(r, 1000))
       }
     } catch {
       setLast({ status: 'failed' })
@@ -245,11 +283,22 @@ export default function VerticalPage() {
               </div>
               <div className="rounded-2xl border border-white/10 bg-[#171717] p-4">
                 {!m.output ? (
-                  <div className="flex items-center gap-2 text-sm text-slate-400">
-                    {(m.status === 'queued' || m.status === 'running') && (
-                      <span className="h-2 w-2 animate-pulse rounded-full bg-forge-500" />
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2 text-sm text-slate-400">
+                      {(m.status === 'queued' || m.status === 'running') && (
+                        <span className="h-2 w-2 animate-pulse rounded-full bg-forge-500" />
+                      )}
+                      {STATUS_LABEL[m.status] ?? m.status}
+                    </div>
+                    {m.trace && m.trace.length > 0 && (
+                      <ul className="space-y-0.5 pl-4 text-xs text-slate-500">
+                        {m.trace.map((t, j) => (
+                          <li key={j} className="font-mono">
+                            {t}
+                          </li>
+                        ))}
+                      </ul>
                     )}
-                    {STATUS_LABEL[m.status] ?? m.status}
                   </div>
                 ) : (
                   <>
@@ -271,7 +320,40 @@ export default function VerticalPage() {
           {hint && (
             <div className="mx-auto mb-2 max-w-3xl text-center text-xs text-amber-400">{hint}</div>
           )}
+          {images.length > 0 && (
+            <div className="mx-auto mb-2 flex max-w-3xl flex-wrap gap-2">
+              {images.map((img, i) => (
+                <span
+                  key={i}
+                  className="flex items-center gap-1 rounded-lg border border-white/10 bg-[#171717] px-2 py-1 text-xs text-slate-300"
+                >
+                  🖼 {img.name}
+                  <button
+                    onClick={() => setImages((prev) => prev.filter((_, j) => j !== i))}
+                    className="ml-1 text-slate-500 hover:text-white"
+                  >
+                    ✕
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
           <div className="mx-auto flex max-w-3xl items-end gap-2 rounded-2xl border border-white/10 bg-[#171717] p-2 shadow-lg">
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              multiple
+              hidden
+              onChange={(e) => onFiles(e.target.files)}
+            />
+            <button
+              onClick={() => fileRef.current?.click()}
+              className="rounded-lg px-2 py-2 text-slate-400 hover:bg-white/5 hover:text-white"
+              title="Attach image"
+            >
+              📎
+            </button>
             <textarea
               ref={inputRef}
               value={input}

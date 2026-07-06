@@ -65,6 +65,14 @@ async def list_runs() -> dict:
     rows = await runs.list_recent(_TENANT, limit=30)
     return {"runs": rows}
 
+@router.get("/runs/{run_id}/events")
+async def list_run_events(run_id: str) -> dict:
+    rows = await run_events.list_for_run(run_id)
+    for r in rows:  # JSONB payload comes back as a string
+        if isinstance(r.get("payload"), str):
+            r["payload"] = json.loads(r["payload"])
+    return {"events": rows}
+
 @router.post("/agents/{vertical}/sessions", status_code=201)
 async def create_session(vertical: str) -> dict:
     session_id = nanoid(size=12)

@@ -16,6 +16,7 @@ export async function startRun(args: {
   query: string
   apiKey?: string
   threadId?: string
+  images?: { media_type: string; data: string }[]
   maxSeconds?: number
   webhookUrl?: string
 }): Promise<{ run_id: string; stream_url: string; estimated_seconds: number }> {
@@ -28,6 +29,7 @@ export async function startRun(args: {
     body: JSON.stringify({
       query: args.query,
       thread_id: args.threadId,
+      images: args.images?.length ? args.images : undefined,
       max_seconds: args.maxSeconds,
       webhook_url: args.webhookUrl,
     }),
@@ -77,6 +79,18 @@ export interface RunStatus {
   tool_calls: number
   cost_usd: number
   result: ResearchOutput | null
+}
+
+export interface RunEvent {
+  kind: string
+  payload: { _seq?: number; tool?: string; [k: string]: unknown }
+}
+
+export async function getRunEvents(runId: string): Promise<RunEvent[]> {
+  const res = await fetch(`/api/proxy/v1/runs/${runId}/events`, { cache: 'no-store' })
+  if (!res.ok) return []
+  const evs: RunEvent[] = (await res.json()).events ?? []
+  return evs.sort((a, b) => (a.payload._seq ?? 0) - (b.payload._seq ?? 0))
 }
 
 export async function getRun(runId: string, apiKey?: string): Promise<RunStatus> {
