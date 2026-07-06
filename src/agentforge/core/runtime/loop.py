@@ -22,8 +22,10 @@ from typing import Any
 from nanoid import generate as nanoid
 
 from agentforge.core.llm.types import (
+    LLMImageBlock,
     LLMMessage,
     LLMRouter,
+    LLMTextBlock,
     LLMToolDef,
     LLMToolResultBlock,
     LLMToolUseBlock,
@@ -71,6 +73,7 @@ class AgentRunArgs:
     tenant_id: str = "public"
     context: dict[str, Any] | None = None
     emitter: AgentEventEmitter | None = None
+    images: list[dict[str, Any]] | None = None  # [{media_type, data(base64)}]
 
 
 async def run_agent(args: AgentRunArgs) -> ResearchOutput:
@@ -95,7 +98,19 @@ async def run_agent(args: AgentRunArgs) -> ResearchOutput:
         if args.context
         else args.query
     )
-    messages: list[LLMMessage] = [LLMMessage(role="user", content=initial_text)]
+    # Multimodal: if images are attached, send text + image blocks so Claude's
+    # vision can read them (extract text, describe damage, etc.). Else text-only.
+    if args.images:
+        blocks: list[Any] = [LLMTextBlock(text=initial_text)]
+        for img in args.images:
+            blocks.append(
+                LLMImageBlock(
+                    source={"type": "base64", "media_type": img["media_type"], "data": img["data"]}
+                )
+            )
+        messages: list[LLMMessage] = [LLMMessage(role="user", content=blocks)]
+    else:
+        messages = [LLMMessage(role="user", content=initial_text)]
 
     step = 0
     cost_usd = 0.0

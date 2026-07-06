@@ -24,9 +24,12 @@ async def enqueue_run(
     query: str,
     context: dict[str, Any] | None = None,
     limits: dict[str, Any] | None = None,
+    thread_id: str | None = None,
+    attachments: list[dict[str, Any]] | None = None,
 ) -> None:
-    await runs.insert_queued(run_id= run_id, tenant_id= tenant_id, vertical=vertical,
-                             query=query, context=context, limits=limits)
+    await runs.insert_queued(run_id=run_id, tenant_id=tenant_id, vertical=vertical,
+                             query=query, context=context, limits=limits,
+                             thread_id=thread_id, attachments=attachments)
     redis = get_redis()
     await redis.lpush(queue_key(vertical), run_id)
 

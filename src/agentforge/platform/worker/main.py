@@ -18,12 +18,14 @@ from agentforge.core.observability import get_logger
 
 
 async def _drain(vertical: str, router: LLMRouter) -> None:
+    log = get_logger("worker")
+    log.info("worker.started", vertical=vertical)
     while True:
+        # process_one blocks up to 5s on an empty queue (BRPOP), then returns
+        # None — so this loop stays alive and keeps polling, no busy-spin.
         run_id = await process_one(vertical, router)
-        if run_id is None:
-            break
-        log = get_logger("worker")
-        log.info("run.processed", run_id=run_id)
+        if run_id is not None:
+            log.info("run.processed", run_id=run_id)
 
 
 def main() -> None:

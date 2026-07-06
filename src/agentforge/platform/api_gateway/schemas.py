@@ -11,6 +11,8 @@ class RunRequest(BaseModel):
     max_cost_usd: float| None = None
     webhook_url: str|None= None
     context: dict[str, Any] | None = None
+    thread_id: str | None = None
+    images: list[dict[str, str]] | None = None  # [{media_type, data(base64)}]
     model_config = ConfigDict(extra="forbid")
 
     @field_validator("max_cost_usd")

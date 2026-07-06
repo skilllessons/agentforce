@@ -27,6 +27,7 @@ async def insert_queued(
     attachments: list[dict[str, Any]] | None = None,
     limits: dict[str, Any] | None = None,
     webhook_url: str | None = None,
+    thread_id: str | None = None,
 ) -> None:
     """Insert a fresh queued run. Called BEFORE pushing the id onto Redis."""
     pool = await get_pool()
@@ -35,9 +36,9 @@ async def insert_queued(
             """
             INSERT INTO runs (
                 id, tenant_id, vertical, query,
-                context, attachments, limits, webhook_url
+                context, attachments, limits, webhook_url, thread_id
             )
-            VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7::jsonb, $8)
+            VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7::jsonb, $8, $9)
             """,
             run_id,
             tenant_id,
@@ -47,7 +48,38 @@ async def insert_queued(
             json.dumps(attachments or []),
             json.dumps(limits or {}),
             webhook_url,
+            thread_id,
         )
+
+
+async def history_for_thread(thread_id: str, *, char_budget: int = 6000) -> list[dict[str, str]]:
+    """Prior turns in a thread for multi-turn context — {query, summary} pairs.
+
+    Compaction ("compact if no space"): walk newest→oldest, keep turns until the
+    running char total exceeds char_budget, then stop — so recent turns win and
+    context stays bounded. Returns oldest→newest for natural reading order.
+    """
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT query, result->>'summary' AS summary
+              FROM runs
+             WHERE thread_id = $1 AND status = 'completed'
+             ORDER BY enqueued_at DESC
+            """,
+            thread_id,
+        )
+
+    kept: list[dict[str, str]] = []
+    total = 0
+    for r in rows:  # newest first
+        turn = {"query": r["query"], "summary": r["summary"] or ""}
+        total += len(turn["query"]) + len(turn["summary"])
+        if total > char_budget and kept:
+            break
+        kept.append(turn)
+    return list(reversed(kept))  # oldest → newest
 
 
 async def mark_running(run_id: str) -> bool:
@@ -156,3 +188,37 @@ async def get(run_id: str) -> dict[str, Any] | None:
     async with pool.acquire() as conn:
         row = await conn.fetchrow("SELECT * FROM runs WHERE id = $1", run_id)
         return dict(row) if row else None
+
+
+async def list_for_thread(thread_id: str) -> list[dict[str, Any]]:
+    """All runs in a thread, oldest first — to replay a conversation in the UI."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT id, query, status, result, cost_usd, tool_call_count, elapsed_seconds
+              FROM runs
+             WHERE thread_id = $1
+             ORDER BY enqueued_at ASC
+            """,
+            thread_id,
+        )
+        return [dict(r) for r in rows]
+
+
+async def list_recent(tenant_id: str, *, limit: int = 30) -> list[dict[str, Any]]:
+    """Recent runs for one tenant — summary columns only (no heavy result JSONB)."""
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT id, vertical, query, status, cost_usd, enqueued_at
+              FROM runs
+             WHERE tenant_id = $1
+             ORDER BY enqueued_at DESC
+             LIMIT $2
+            """,
+            tenant_id,
+            limit,
+        )
+        return [dict(r) for r in rows]

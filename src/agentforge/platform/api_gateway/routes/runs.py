@@ -4,9 +4,11 @@ import asyncio
 from fastapi.responses import StreamingResponse
 from fastapi import APIRouter, HTTPException
 from nanoid import generate as nanoid
-from agentforge.core.db.repos import runs, run_events
+from agentforge.core.db.repos import runs, run_events, sessions
 from agentforge.platform.run_orchestrator.queue import enqueue_run
 from agentforge.platform.api_gateway.schemas import RunRequest, RunAccepted, RunStatus
+
+_TENANT = "local-dev"  # TODO: from auth (T4)
 
 
 _STREAM_TIMEOUT_S = 120     # stop streaming after this long (run cap is 90s)
@@ -41,9 +43,51 @@ async def create_run(vertical: str, req: RunRequest) -> RunAccepted:
         limits["max_cost_usd"] = req.max_cost_usd
     if req.max_seconds is not None:
         limits["max_seconds"] = req.max_seconds
-    await enqueue_run(run_id, tenant_id="local-dev", vertical=vertical, query=req.query, context=req.context,
-                      limits=limits)
+
+    # Multi-turn context: if this run is part of a thread, prepend the compacted
+    # prior turns so the agent can answer follow-ups.
+    context = dict(req.context or {})
+    if req.thread_id:
+        history = await runs.history_for_thread(req.thread_id)
+        if history:
+            context["conversation"] = history
+        await sessions.touch(req.thread_id, title=req.query[:80])
+
+    await enqueue_run(
+        run_id, tenant_id=_TENANT, vertical=vertical, query=req.query,
+        context=context or None, limits=limits, thread_id=req.thread_id,
+        attachments=req.images,
+    )
     return RunAccepted(run_id=run_id, status="queued", stream_url=f"/v1/runs/{run_id}/stream", estimated_seconds=40)
+
+@router.get("/runs")
+async def list_runs() -> dict:
+    rows = await runs.list_recent(_TENANT, limit=30)
+    return {"runs": rows}
+
+@router.post("/agents/{vertical}/sessions", status_code=201)
+async def create_session(vertical: str) -> dict:
+    session_id = nanoid(size=12)
+    await sessions.create(session_id, tenant_id=_TENANT, vertical=vertical)
+    return {"thread_id": session_id}
+
+@router.get("/sessions")
+async def list_sessions() -> dict:
+    rows = await sessions.list_recent(_TENANT, limit=30)
+    return {"sessions": rows}
+
+@router.get("/sessions/{thread_id}/runs")
+async def list_session_runs(thread_id: str) -> dict:
+    rows = await runs.list_for_thread(thread_id)
+    for r in rows:
+        if isinstance(r.get("result"), str):  # JSONB comes back as a string
+            r["result"] = json.loads(r["result"])
+        # NUMERIC comes back as Decimal → coerce so the JSON is a number, not a string.
+        r["cost_usd"] = float(r["cost_usd"]) if r["cost_usd"] is not None else 0.0
+        r["elapsed_seconds"] = (
+            float(r["elapsed_seconds"]) if r["elapsed_seconds"] is not None else None
+        )
+    return {"runs": rows}
 
 @router.get("/runs/{run_id}", response_model=RunStatus)
 async def get_run(run_id: str) -> RunStatus:

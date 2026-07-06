@@ -51,6 +51,10 @@ async def process_one(vertical: str, router: LLMRouter) -> str | None:
         if isinstance(ctx, str):
             ctx = json.loads(ctx)
 
+        images = row["attachments"]  # JSONB → str; base64 image inputs
+        if isinstance(images, str):
+            images = json.loads(images)
+
         args = AgentRunArgs(
             query=row["query"],
             vertical=cfg,
@@ -58,6 +62,7 @@ async def process_one(vertical: str, router: LLMRouter) -> str | None:
             run_id=run_id,
             tenant_id=row["tenant_id"],
             context=ctx or None,
+            images=images or None,
         )
 
         try:
