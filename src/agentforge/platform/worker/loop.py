@@ -103,6 +103,7 @@ async def process_one(vertical: str, router: LLMRouter) -> str | None:
             tenant_id=row["tenant_id"],
             context=ctx or None,
             images=images or None,
+            model=row["model"],
             emitter=emitter,
         )
 

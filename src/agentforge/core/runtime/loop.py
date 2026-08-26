@@ -74,6 +74,7 @@ class AgentRunArgs:
     context: dict[str, Any] | None = None
     emitter: AgentEventEmitter | None = None
     images: list[dict[str, Any]] | None = None  # [{media_type, data(base64)}]
+    model: str | None = None  # per-run override; falls back to vertical/default
 
 
 async def run_agent(args: AgentRunArgs) -> ResearchOutput:
@@ -129,7 +130,7 @@ async def run_agent(args: AgentRunArgs) -> ResearchOutput:
             system=args.vertical.system_prompt,
             messages=messages,
             tools=tool_defs,
-            model=args.vertical.model,
+            model=args.model or args.vertical.model,
         )
         cost_usd += completion.usage.cost_usd
 

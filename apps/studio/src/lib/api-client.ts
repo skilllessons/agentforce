@@ -17,6 +17,7 @@ export async function startRun(args: {
   apiKey?: string
   threadId?: string
   images?: { media_type: string; data: string }[]
+  model?: string
   maxSeconds?: number
   webhookUrl?: string
 }): Promise<{ run_id: string; stream_url: string; estimated_seconds: number }> {
@@ -30,6 +31,7 @@ export async function startRun(args: {
       query: args.query,
       thread_id: args.threadId,
       images: args.images?.length ? args.images : undefined,
+      model: args.model,
       max_seconds: args.maxSeconds,
       webhook_url: args.webhookUrl,
     }),

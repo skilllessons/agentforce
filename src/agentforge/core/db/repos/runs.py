@@ -28,6 +28,7 @@ async def insert_queued(
     limits: dict[str, Any] | None = None,
     webhook_url: str | None = None,
     thread_id: str | None = None,
+    model: str | None = None,
 ) -> None:
     """Insert a fresh queued run. Called BEFORE pushing the id onto Redis."""
     pool = await get_pool()
@@ -36,9 +37,9 @@ async def insert_queued(
             """
             INSERT INTO runs (
                 id, tenant_id, vertical, query,
-                context, attachments, limits, webhook_url, thread_id
+                context, attachments, limits, webhook_url, thread_id, model
             )
-            VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7::jsonb, $8, $9)
+            VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7::jsonb, $8, $9, $10)
             """,
             run_id,
             tenant_id,
@@ -49,6 +50,7 @@ async def insert_queued(
             json.dumps(limits or {}),
             webhook_url,
             thread_id,
+            model,
         )
 
 

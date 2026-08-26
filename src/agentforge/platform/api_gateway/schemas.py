@@ -2,6 +2,7 @@ from typing import Literal, Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from agentforge.core.llm.pricing import MODEL_PRICING
 from agentforge.core.runtime.limits import DEFAULT_LIMITS
 
 
@@ -13,7 +14,15 @@ class RunRequest(BaseModel):
     context: dict[str, Any] | None = None
     thread_id: str | None = None
     images: list[dict[str, str]] | None = None  # [{media_type, data(base64)}]
+    model: str | None = None
     model_config = ConfigDict(extra="forbid")
+
+    @field_validator("model")
+    @classmethod
+    def _known_model(cls, v: str | None) -> str | None:
+        if v is not None and v not in MODEL_PRICING:
+            raise ValueError(f"unknown model: {v}")
+        return v
 
     @field_validator("max_cost_usd")
     @classmethod

@@ -56,7 +56,7 @@ async def create_run(vertical: str, req: RunRequest) -> RunAccepted:
     await enqueue_run(
         run_id, tenant_id=_TENANT, vertical=vertical, query=req.query,
         context=context or None, limits=limits, thread_id=req.thread_id,
-        attachments=req.images,
+        attachments=req.images, model=req.model,
     )
     return RunAccepted(run_id=run_id, status="queued", stream_url=f"/v1/runs/{run_id}/stream", estimated_seconds=40)
 

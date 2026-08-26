@@ -144,7 +144,7 @@ export default function VerticalPage() {
         setThreadId(tid)
       }
       const imgs = images.map((i) => ({ media_type: i.media_type, data: i.data }))
-      const { run_id } = await startRun({ vertical, query: q, threadId: tid, images: imgs })
+      const { run_id } = await startRun({ vertical, query: q, threadId: tid, images: imgs, model })
       setImages([])
       setMessages((prev) => [...prev, { runId: run_id, query: q, status: 'queued', output: null }])
       for (let i = 0; i < 120; i++) {
