@@ -1,7 +1,7 @@
-# AgentForge — Project Context for Claude
+# AgentForge — Project Context for Codex
 
-> Paste this file at the start of every Claude session working on this project.
-> Claude should read this fully before writing any code, docs, or plans.
+> Paste this file at the start of every Codex session working on this project.
+> Codex should read this fully before writing any code, docs, or plans.
 
 ---
 
@@ -322,7 +322,7 @@ The user is learning the system, not collecting completed files. Two rules:
 4. Review: point out bugs, missing edge cases, suggest improvements.
 5. Move on once it's solid.
 
-**Rule of thumb:** if the code would teach the user something new about the system, *they* type it. If it's just plumbing, Claude can type it.
+**Rule of thumb:** if the code would teach the user something new about the system, *they* type it. If it's just plumbing, Codex can type it.
 
 ### These guidelines are working if
 
@@ -332,7 +332,7 @@ The user is learning the system, not collecting completed files. Two rules:
 
 ---
 
-## Rules for Claude working on this project
+## Rules for Codex working on this project
 
 **Always:**
 - Implement tools against the `ResearchTool` interface — no exceptions
@@ -356,8 +356,8 @@ The user is learning the system, not collecting completed files. Two rules:
 4. Estimate `estimatedCostUsd` (external API cost per call)
 5. Write 5 unit tests with mocked responses
 6. Add to the `TOOLS` list in `src/agentforge/verticals/{name}/__init__.py`, and to the
-   `TOOLS AVAILABLE` block in that vertical's `system_prompt.py` — see the
-   `new-connector` skill for all six registration touch points
+   `TOOLS AVAILABLE` block in that vertical's `system_prompt.py` — see
+   `.claude/skills/new-connector/SKILL.md` for all six registration touch points
 
 **When writing a system prompt:**
 1. List ALWAYS rules first (citation format, jurisdiction rules, evidence quality)
