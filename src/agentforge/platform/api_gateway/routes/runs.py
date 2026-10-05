@@ -1,12 +1,15 @@
 from __future__ import annotations
-import json
+
 import asyncio
-from fastapi.responses import StreamingResponse
+import json
+
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
 from nanoid import generate as nanoid
-from agentforge.core.db.repos import runs, run_events, sessions
+
+from agentforge.core.db.repos import run_events, runs, sessions
+from agentforge.platform.api_gateway.schemas import RunAccepted, RunRequest, RunStatus
 from agentforge.platform.run_orchestrator.queue import enqueue_run
-from agentforge.platform.api_gateway.schemas import RunRequest, RunAccepted, RunStatus
 
 _TENANT = "local-dev"  # TODO: from auth (T4)
 
@@ -104,7 +107,7 @@ async def get_run(run_id: str) -> RunStatus:
     if row is None:
         raise HTTPException(status_code=404, detail="run not found")
 
-    result = row["result"];
+    result = row["result"]
     if isinstance(result, str): result = json.loads(result)
 
     return RunStatus(

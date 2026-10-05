@@ -1,6 +1,6 @@
 from __future__ import annotations
-from contextlib import asynccontextmanager
 
+from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI
@@ -9,8 +9,6 @@ from agentforge.core.db.client import close_db, get_pool
 from agentforge.core.observability import configure_logging, get_logger
 from agentforge.core.tools.redis_client import close_redis
 from agentforge.platform.api_gateway.routes import agents, runs
-
-
 
 log = get_logger("api")
 

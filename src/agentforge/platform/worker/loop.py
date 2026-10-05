@@ -13,11 +13,11 @@ import asyncio
 import json
 from typing import Any
 
-from agentforge.core.llm.types import LLMRouter
-from agentforge.core.runtime.loop import AgentRunArgs, VerticalConfig, run_agent
 from agentforge.core.db.repos import run_events, runs
-from agentforge.platform.run_orchestrator.queue import dequeue_run
+from agentforge.core.llm.types import LLMRouter
 from agentforge.core.observability import bind_run, clear_run, get_logger
+from agentforge.core.runtime.loop import AgentRunArgs, VerticalConfig, run_agent
+from agentforge.platform.run_orchestrator.queue import dequeue_run
 
 log = get_logger("worker.loop")
 

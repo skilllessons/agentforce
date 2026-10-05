@@ -1,4 +1,5 @@
-import  hashlib, secrets
+import hashlib
+import secrets
 
 from agentforge.core.db.repos import api_keys
 

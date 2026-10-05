@@ -12,9 +12,8 @@ from dotenv import load_dotenv
 
 from agentforge.core.llm.factory import create_default_router
 from agentforge.core.llm.types import LLMRouter
+from agentforge.core.observability import configure_logging, get_logger
 from agentforge.platform.worker.loop import process_one
-from agentforge.core.observability import configure_logging
-from agentforge.core.observability import get_logger
 
 
 async def _drain(vertical: str, router: LLMRouter) -> None:
