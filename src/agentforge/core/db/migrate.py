@@ -16,15 +16,22 @@ Or from the shell:
 from __future__ import annotations
 
 import asyncio
+import os
 from pathlib import Path
 
 from agentforge.core.db.client import close_db, get_pool
 
-# infra/postgres/migrations lives at the repo root, four parents up from this
-# file: db/ -> core/ -> agentforge/ -> src/ -> <repo>
-_MIGRATIONS_DIR = (
-    Path(__file__).resolve().parents[4] / "infra" / "postgres" / "migrations"
-)
+
+# In a source checkout, infra/postgres/migrations sits at the repo root, four
+# parents up from this file: db/ -> core/ -> agentforge/ -> src/ -> <repo>.
+# That walk is wrong in a container, where the package is installed into
+# site-packages and the repo tree is gone — hence the env override, which the
+# Dockerfile sets.
+def _default_migrations_dir() -> Path:
+    override = os.getenv("AGENTFORGE_MIGRATIONS_DIR")
+    if override:
+        return Path(override)
+    return Path(__file__).resolve().parents[4] / "infra" / "postgres" / "migrations"
 
 _TRACKING_TABLE_DDL = """
 CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -36,7 +43,7 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 
 async def run_migrations(migrations_dir: Path | None = None) -> list[str]:
     """Apply any new ``.sql`` files in sorted order. Returns names applied."""
-    directory = migrations_dir or _MIGRATIONS_DIR
+    directory = migrations_dir or _default_migrations_dir()
     if not directory.is_dir():
         raise FileNotFoundError(f"migrations dir not found: {directory}")
 
