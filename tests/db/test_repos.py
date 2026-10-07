@@ -18,7 +18,7 @@ import asyncpg
 import pytest
 
 from agentforge.core.config import get_settings
-from agentforge.core.db.client import close_db, get_pool
+from agentforge.core.db.client import close_db
 from agentforge.core.db.migrate import run_migrations
 from agentforge.core.db.repos import runs, tenants
 

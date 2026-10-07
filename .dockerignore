@@ -30,9 +30,19 @@ node_modules
 .env.*
 !.env.example
 
-# Infra is built from cluster, not from inside images
-infra
+# Infra is built from cluster, not from inside images.
+# Exception: the root Dockerfile COPYs infra/postgres/migrations, which
+# agentforge-migrate reads at runtime — so exclude the subtrees, not all of
+# infra. (Excluding `infra` outright makes that COPY fail.)
+infra/helm
+infra/terraform
 pitch
+
+# Not needed inside the Python image.
+tests
+scripts
+docs
+docker-compose.yml
 
 # Misc
 .DS_Store

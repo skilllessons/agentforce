@@ -9,8 +9,9 @@ In prod (ENV=prod) logs render as JSON; in dev as a colored console.
 
 from __future__ import annotations
 
-import structlog
 import logging
+
+import structlog
 
 from agentforge.core.config import get_settings
 

@@ -1,7 +1,8 @@
 from __future__ import annotations
-from fastapi import APIRouter
-from agentforge.verticals.insurance import INSURANCE_VERTICAL
 
+from fastapi import APIRouter
+
+from agentforge.verticals.insurance import INSURANCE_VERTICAL
 
 router = APIRouter(prefix="/v1", tags=["agents"])
 
