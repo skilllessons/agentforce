@@ -19,7 +19,7 @@ jobs:
   # DATABASE_URL reachable they self-skip, which reads as green while testing
   # nothing. Redis is faked in conftest, so no Redis service is needed.
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:16-alpine
@@ -36,9 +36,9 @@ jobs:
     env:
       DATABASE_URL: postgresql://agentforge:agentforge@localhost:5432/agentforge
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v6
         with:
           version: ${{ env.UV_VERSION }}
           enable-cache: true
@@ -57,11 +57,11 @@ jobs:
   # Flip continue-on-error off once those are swept — a lint gate that has
   # always been red teaches everyone to ignore it.
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v6
         with:
           version: ${{ env.UV_VERSION }}
           enable-cache: true
@@ -83,7 +83,7 @@ jobs:
   # One Dockerfile, three targets sharing every layer below the final stage.
   # Names match infra/helm/.../_helpers.tpl and infra/terraform/ecr.tf.
   images:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: test
     permissions:
       contents: read
@@ -93,7 +93,7 @@ jobs:
       matrix:
         component: [api-gateway, worker, migrate]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: docker/setup-buildx-action@v3
 
