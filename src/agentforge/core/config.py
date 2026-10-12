@@ -64,6 +64,15 @@ class Settings(BaseSettings):
     max_cost_usd: float = 0.50
     max_seconds: int = 90
 
+    # ── Connectors ─────────────────────────────────────────────────
+    # Zendesk uses OAuth client credentials; API tokens are unavailable
+    # on accounts created after 2026-07-28.
+    zendesk_subdomain:str | None = None
+    zendesk_client_id:str | None = None
+    zendesk_client_secret:str | None = None
+
+
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
