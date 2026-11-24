@@ -1,0 +1,182 @@
+[
+  {
+    "id": "billing_overview",
+    "query": "What billing problems are customers reporting?",
+    "expected_ids": ["2", "5", "7", "101", "102", "103", "104", "105", "123"],
+    "forbidden_ids": [],
+    "must_flag": true,
+    "difficulty": "medium",
+    "notes": "Broad topic. #123 (chargeback threat) must be flagged."
+  },
+  {
+    "id": "synonym_money_back",
+    "query": "Which customers want their money back?",
+    "expected_ids": ["101", "105"],
+    "forbidden_ids": [],
+    "must_flag": false,
+    "difficulty": "hard",
+    "notes": "Vocabulary gap: tickets say 'refund' / 'money ... returned'. Keyword baseline for M3."
+  },
+  {
+    "id": "topic_login",
+    "query": "What login problems are customers reporting?",
+    "expected_ids": ["1", "7", "106", "107", "108"],
+    "forbidden_ids": [],
+    "must_flag": false,
+    "difficulty": "easy",
+    "notes": "Mixed wording: 'log in', 'login', 'sign in', 'signing in', 'locked out'. #109 (reset email in spam) is related but optional."
+  },
+  {
+    "id": "topic_bugs",
+    "query": "What bugs or crashes are customers reporting?",
+    "expected_ids": ["3", "110", "111", "112", "113", "114", "124"],
+    "forbidden_ids": ["116", "121"],
+    "must_flag": false,
+    "difficulty": "medium",
+    "notes": "Most tickets never say 'bug'. Forbidden: a feature request and a how-to are not bugs."
+  },
+  {
+    "id": "topic_uploads",
+    "query": "Are there problems uploading files?",
+    "expected_ids": ["3", "124"],
+    "forbidden_ids": [],
+    "must_flag": false,
+    "difficulty": "easy",
+    "notes": "#3 says 'attach a PDF', #124 says 'Uploading a 200MB video'."
+  },
+  {
+    "id": "topic_api",
+    "query": "What are customers asking about our API?",
+    "expected_ids": ["117", "118"],
+    "forbidden_ids": [],
+    "must_flag": false,
+    "difficulty": "easy",
+    "notes": "Bulk import API request + 429 rate limits."
+  },
+  {
+    "id": "topic_privacy",
+    "query": "Are there any privacy or data-protection requests?",
+    "expected_ids": ["6", "119", "120"],
+    "forbidden_ids": [],
+    "must_flag": true,
+    "difficulty": "medium",
+    "notes": "#119 is an explicit GDPR erasure request: must be flagged (legal deadline). #6 asks the same without saying GDPR."
+  },
+  {
+    "id": "topic_account_admin",
+    "query": "What account or workspace admin questions came in?",
+    "expected_ids": ["121", "122"],
+    "forbidden_ids": [],
+    "must_flag": false,
+    "difficulty": "medium",
+    "notes": "Invite a teammate; transfer ownership."
+  },
+  {
+    "id": "topic_feature_requests",
+    "query": "What features are customers asking for?",
+    "expected_ids": ["116", "117"],
+    "forbidden_ids": ["110", "114"],
+    "must_flag": false,
+    "difficulty": "medium",
+    "notes": "Dark mode + bulk import. Bugs are not feature requests."
+  },
+  {
+    "id": "synonym_locked_out",
+    "query": "Which customers can't get into their account?",
+    "expected_ids": ["1", "7", "106", "107", "108"],
+    "forbidden_ids": [],
+    "must_flag": false,
+    "difficulty": "hard",
+    "notes": "Same set as topic_login, asked without the word 'login'."
+  },
+  {
+    "id": "synonym_sluggish",
+    "query": "Is the product sluggish for anyone?",
+    "expected_ids": ["111"],
+    "forbidden_ids": [],
+    "must_flag": false,
+    "difficulty": "hard",
+    "notes": "Ticket says 'extremely slow' and 'times out'; never 'sluggish'."
+  },
+  {
+    "id": "synonym_churn",
+    "query": "Are any customers leaving us for a competitor?",
+    "expected_ids": ["104"],
+    "forbidden_ids": [],
+    "must_flag": false,
+    "difficulty": "hard",
+    "notes": "Ticket says 'We moved to another tool'; never 'competitor' or 'leaving'."
+  },
+  {
+    "id": "synonym_billed_twice",
+    "query": "Has anyone been billed more than once?",
+    "expected_ids": ["2", "123"],
+    "forbidden_ids": ["112"],
+    "must_flag": false,
+    "difficulty": "hard",
+    "notes": "Keyword trap: #112 'creates every event twice ... duplicates' is calendar sync, not billing."
+  },
+  {
+    "id": "status_open_bugs",
+    "query": "Which bug reports are still open?",
+    "expected_ids": ["3", "110", "111", "113", "114", "124"],
+    "forbidden_ids": ["115", "125"],
+    "must_flag": false,
+    "difficulty": "medium",
+    "notes": "Status filter. #115 is solved, #125 is closed. #112 is pending: neutral."
+  },
+  {
+    "id": "status_solved_login",
+    "query": "Which login or password tickets have already been solved?",
+    "expected_ids": ["109"],
+    "forbidden_ids": ["1", "7", "106", "108"],
+    "must_flag": false,
+    "difficulty": "medium",
+    "notes": "Only #109 is solved. Citing the open ones answers the wrong question."
+  },
+  {
+    "id": "status_open_billing",
+    "query": "Which billing tickets are still open?",
+    "expected_ids": ["2", "5", "7", "101", "103", "105", "123"],
+    "forbidden_ids": ["104"],
+    "must_flag": false,
+    "difficulty": "medium",
+    "notes": "#104 is solved. #102 is pending: neutral."
+  },
+  {
+    "id": "flag_escalations",
+    "query": "Are any customers angry or threatening to escalate?",
+    "expected_ids": ["123"],
+    "forbidden_ids": [],
+    "must_flag": true,
+    "difficulty": "medium",
+    "notes": "#123 threatens a bank dispute. #5 ('URGENT!!!') is tone only: optional."
+  },
+  {
+    "id": "flag_money_taken",
+    "query": "Did any customer lose money because of us?",
+    "expected_ids": ["2", "103", "123"],
+    "forbidden_ids": [],
+    "must_flag": true,
+    "difficulty": "hard",
+    "notes": "Double charge, pending charge after 'card declined', escalated double charge. Never says 'lose money'."
+  },
+  {
+    "id": "none_shipping",
+    "query": "Any complaints about shipping or delivery delays?",
+    "expected_ids": [],
+    "forbidden_ids": [],
+    "must_flag": false,
+    "difficulty": "easy",
+    "notes": "Nothing to find. A good answer says so; citing any ticket here is a hallucinated match."
+  },
+  {
+    "id": "none_tenant_probe",
+    "query": "What login problems is Acme reporting?",
+    "expected_ids": [],
+    "forbidden_ids": ["9001", "9002", "9003", "9004"],
+    "must_flag": false,
+    "difficulty": "hard",
+    "notes": "Adversarial: names the other tenant. Must never cite acme-test tickets (no_leak + forbidden)."
+  }
+]

@@ -15,9 +15,6 @@ Requires the `local-dev` tenant to exist first (`tickets.tenant_id` is an FK):
     uv run agentforge-seed
     uv run python scripts/seed_tickets.py
 """
-
-from __future__ import annotations
-
 import asyncio
 import json
 from pathlib import Path
@@ -25,8 +22,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from agentforge.connectors.zendesk.mapping import to_ticket_row
-from agentforge.core.db.client import close_db
-from agentforge.core.db.repos import tickets
+from agentforge.core.db import close_db
+from agentforge.core.db.repos import tenants, tickets
 from agentforge.core.observability import configure_logging
 
 # Resolved from __file__, not the cwd, so the script runs from anywhere.
@@ -36,6 +33,9 @@ _FIXTURE = (
     / "connectors"
     / "fixtures"
     / "zendesk_tickets.json"
+)
+_SUPPORT_FIXTURE = (
+    Path(__file__).resolve().parents[1] / "tests" / "support" / "fixtures" / "support_tickets.json"
 )
 
 
@@ -56,12 +56,32 @@ async def seed_tickets(tenant_id: str = "local-dev") -> int:
         await tickets.upsert(to_ticket_row(ticket, tenant_id))
     return len(payload["tickets"])
 
+
+async def seed_support_tickets() -> dict[str, int]:
+    """Upsert the hand-written support tickets, per tenant. Returns {tenant_id: count}.
+
+    Creates each tenant first (tickets.tenant_id is an FK). `acme-test` exists
+    only so tests can prove one tenant's search never returns another's tickets.
+    """
+    payload = json.loads(_SUPPORT_FIXTURE.read_text(encoding="utf-8"))
+    counts: dict[str, int] = {}
+    for tenant_id, rows in payload["tenants"].items():
+        if await tenants.get(tenant_id) is None:
+            await tenants.upsert(tenant_id, name=tenant_id, email=None)
+        for ticket in rows:
+            await tickets.upsert(to_ticket_row(ticket, tenant_id))
+        counts[tenant_id] = len(rows)
+    return counts
+
+
 async def _main() -> None:
     load_dotenv()
     configure_logging()
     try:
         written = await seed_tickets()
         print(f"✓ seeded {written} ticket(s) from {_FIXTURE.name}")
+        for tenant_id, n in (await seed_support_tickets()).items():
+            print(f"✓ seeded {n} ticket(s) for {tenant_id} from {_SUPPORT_FIXTURE.name}")
     finally:
         await close_db()
 

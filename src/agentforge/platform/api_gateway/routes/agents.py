@@ -3,10 +3,11 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from agentforge.verticals.insurance import INSURANCE_VERTICAL
+from agentforge.verticals.support import SUPPORT_VERTICAL
 
 router = APIRouter(prefix="/v1", tags=["agents"])
 
-_VERTICALS = [INSURANCE_VERTICAL]
+_VERTICALS = [INSURANCE_VERTICAL,SUPPORT_VERTICAL]
 
 
 @router.get("/agents")

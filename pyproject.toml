@@ -50,6 +50,7 @@ agentforge-seed = "agentforge.core.db.seed:cli"
 agentforge-reap = "agentforge.platform.run_orchestrator.reaper:cli"
 agentforge-poll-zendesk = "agentforge.platform.run_orchestrator.zendesk_poller:cli"
 agentforge-eval-insurance = "agentforge.verticals.insurance.eval.run_evals:cli"
+agentforge-eval-support = "agentforge.verticals.support.eval.run_evals:cli"
 
 [build-system]
 requires = ["hatchling"]
