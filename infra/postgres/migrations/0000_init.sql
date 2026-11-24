@@ -13,9 +13,3 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
--- Migration tracking table (managed by core/db migrate runner).
-CREATE TABLE IF NOT EXISTS schema_migrations (
-  version     TEXT PRIMARY KEY,
-  applied_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);

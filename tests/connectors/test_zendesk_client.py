@@ -236,7 +236,7 @@ async def test_iter_tickets_resumes_from_a_cursor(make_client: Any) -> None:
             return _token_response()
         seen.append(dict(request.url.params))
         return httpx.Response(
-            200, json={"tickets": [], "after_cursor": "C9", "end_of_stream": True}
+            200, json={"tickets": [], "after_cursor": None, "end_of_stream": True}
         )
 
     pages = [
@@ -245,5 +245,6 @@ async def test_iter_tickets_resumes_from_a_cursor(make_client: Any) -> None:
     ]
 
     assert seen == [{"cursor": "C8"}]
-    # The cursor advances even on an empty page — the caller must persist it.
-    assert pages == [([], "C9")]
+    # An empty page carries no cursor. Persisting this None would erase the
+    # stored one, which is why connector_state.save COALESCEs it away.
+    assert pages == [([], None)]

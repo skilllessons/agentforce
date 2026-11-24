@@ -50,6 +50,7 @@ from agentforge.core.runtime.events import (
 from agentforge.core.runtime.limits import DEFAULT_LIMITS, RunLimits
 from agentforge.core.runtime.stop import StopReason, check_limits
 from agentforge.core.runtime.synthesize import synthesize
+from agentforge.core.runtime.tenant import current_tenant
 from agentforge.core.schema import ResearchOutput
 from agentforge.core.tools.cache import with_cache
 from agentforge.core.tools.protocol import ResearchTool, ToolResult
@@ -78,6 +79,14 @@ class AgentRunArgs:
 
 
 async def run_agent(args: AgentRunArgs) -> ResearchOutput:
+    token = current_tenant.set(args.tenant_id)
+    try:
+        return await _run_agent(args)
+    finally:
+        current_tenant.reset(token)
+
+
+async def _run_agent(args: AgentRunArgs) -> ResearchOutput:
     run_id = args.run_id or nanoid(size=12)
     started_at = time.monotonic()
     limits = args.vertical.limits

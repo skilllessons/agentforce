@@ -64,6 +64,9 @@ def _load_vertical(vertical: str) -> VerticalConfig:
     if vertical == "insurance":
         from agentforge.verticals.insurance import INSURANCE_VERTICAL
         return INSURANCE_VERTICAL
+    if vertical == "support":
+        from agentforge.verticals.support import SUPPORT_VERTICAL
+        return SUPPORT_VERTICAL
     raise ValueError(f"unknown vertical: {vertical}")
 
 

@@ -7,6 +7,7 @@ create_default_router() returns AnthropicRouter when ANTHROPIC_API_KEY is set
 from __future__ import annotations
 
 import asyncio
+import sys
 
 from dotenv import load_dotenv
 
@@ -31,7 +32,8 @@ def main() -> None:
     load_dotenv()
     configure_logging()
     router = create_default_router()
-    asyncio.run(_drain("insurance", router))
+    vertical = sys.argv[1] if len(sys.argv) > 1 else "insurance"
+    asyncio.run(_drain(vertical, router))
 
 
 if __name__ == "__main__":

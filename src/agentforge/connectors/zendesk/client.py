@@ -224,7 +224,7 @@ class ZendeskClient:
 
     async def iter_tickets(
         self, cursor: str | None = None
-    ) -> AsyncIterator[tuple[list[dict[str, Any]], str]]:
+    ) -> AsyncIterator[tuple[list[dict[str, Any]], str | None]]:
         """Page through the cursor-based incremental export.
 
         GET /api/v2/incremental/tickets/cursor.json
@@ -237,8 +237,9 @@ class ZendeskClient:
         Three verified behaviours this must respect:
           1. This endpoint is rate-limited at 10 req/min, separately from the
              global 400/min. The 429 branch in _request absorbs it.
-          2. ``after_cursor`` advances even when a page returns zero tickets, so
-             the caller persists it on every yield — not only on non-empty pages.
+          2. A page with zero tickets returns ``after_cursor: null``, verified
+             against the live API. The caller must not write that over a stored
+             cursor — doing so forces a full re-backfill on the next poll.
           3. The same ticket can appear in two pages. That is by design, and why
              the upsert on (tenant_id, source, external_id) is load-bearing.
         """

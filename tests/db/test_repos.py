@@ -20,7 +20,7 @@ import pytest
 from agentforge.core.config import get_settings
 from agentforge.core.db.client import close_db
 from agentforge.core.db.migrate import run_migrations
-from agentforge.core.db.repos import runs, tenants
+from agentforge.core.db.repos import connector_state, runs, tenants
 
 
 async def _postgres_reachable() -> bool:
@@ -138,3 +138,52 @@ async def test_run_lifecycle_failed(_migrated: None) -> None:
     assert failed["status"] == "failed"
     assert failed["last_error"] == "synthesis returned non-JSON"
     assert failed["completed_at"] is not None
+
+
+# ── connector_state ─────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_null_cursor_does_not_erase_a_stored_one(_migrated: None) -> None:
+    """Zendesk returns ``after_cursor: null`` on an empty page.
+
+    Writing that through would erase the resume position, and the next poll
+    would re-download the source's entire history — fatal against an endpoint
+    rate-limited to 10 requests/min.
+    """
+    ts = int(time.time() * 1000)
+    tenant_id = f"test-{ts}-cursor"
+    await tenants.upsert(tenant_id, name="Test")
+
+    await connector_state.save(tenant_id, "zendesk", "tickets", "CURSOR_A")
+    await connector_state.save(tenant_id, "zendesk", "tickets", None)
+
+    assert await connector_state.get(tenant_id, "zendesk", "tickets") == "CURSOR_A"
+
+
+@pytest.mark.asyncio
+async def test_first_save_with_no_cursor_is_accepted(_migrated: None) -> None:
+    """No row yet and nothing to record: insert NULL, meaning "backfill".
+
+    The COALESCE guards the UPDATE path only; there is no prior value to keep.
+    """
+    ts = int(time.time() * 1000)
+    tenant_id = f"test-{ts}-first"
+    await tenants.upsert(tenant_id, name="Test")
+
+    await connector_state.save(tenant_id, "zendesk", "tickets", None)
+
+    assert await connector_state.get(tenant_id, "zendesk", "tickets") is None
+
+
+@pytest.mark.asyncio
+async def test_a_real_cursor_still_overwrites(_migrated: None) -> None:
+    """Guards the guard: without this, a no-op `save` would pass the test above."""
+    ts = int(time.time() * 1000)
+    tenant_id = f"test-{ts}-advance"
+    await tenants.upsert(tenant_id, name="Test")
+
+    await connector_state.save(tenant_id, "zendesk", "tickets", "CURSOR_A")
+    await connector_state.save(tenant_id, "zendesk", "tickets", "CURSOR_B")
+
+    assert await connector_state.get(tenant_id, "zendesk", "tickets") == "CURSOR_B"

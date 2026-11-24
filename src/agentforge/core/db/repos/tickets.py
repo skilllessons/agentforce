@@ -74,3 +74,34 @@ async def upsert(row: dict[str, Any]) -> str:
             # asyncpg binds a dict as a composite type, not jsonb.
             json.dumps(row["raw"]),
         )
+
+
+# Keyword search over subject + first message. The same document expression
+# appears in WHERE and ORDER BY; a future GIN index must use it verbatim.
+# M3 replaces the body of search() with hybrid (pgvector) retrieval; the
+# signature stays fixed so the tool never changes.
+_SEARCH = """
+WITH q AS (SELECT replace(websearch_to_tsquery('english', $2)::text, ' & ', ' | ')::tsquery AS tsq)
+SELECT t.external_id, t.subject, t.body, t.status, t.priority, t.external_created_at
+  FROM tickets t, q
+ WHERE t.tenant_id = $1
+   AND ($3::text IS NULL OR t.status = $3)
+   AND to_tsvector('english', coalesce(t.subject, '') || ' ' || coalesce(t.body, '')) @@ q.tsq
+ ORDER BY ts_rank(to_tsvector('english', coalesce(t.subject, '') || ' ' || coalesce(t.body, '')), q.tsq) DESC,
+          t.external_updated_at DESC
+ LIMIT $4
+"""
+
+
+async def search(
+    tenant_id: str, query: str, status: str | None = None, limit: int = 5
+) -> list[dict[str, Any]]:
+    """Keyword-search one tenant's tickets, best match first.
+
+    Always scoped to ``tenant_id``; there is no cross-tenant path. Returns
+    only the columns a tool needs, never ``raw``.
+    """
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(_SEARCH, tenant_id, query, status, limit)
+    return [dict(r) for r in rows]
