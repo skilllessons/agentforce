@@ -97,8 +97,18 @@ config:
   ANTHROPIC_DEFAULT_MODEL: claude-opus-4-7
   RATE_LIMIT_MAX: "60"
   S3_BUCKET: agentforge-files
-  S3_REGION: us-east-1
+  S3_REGION: us-west-1
   MAX_UPLOAD_BYTES: "33554432"
+
+# Sync <release>-secrets from AWS Secrets Manager (templates/external-secrets.yaml).
+# Needs the external-secrets operator (Terraform addons.tf). secretPrefix is
+# Terraform's local.name; the secrets are <prefix>/app/runtime,
+# <prefix>/rds/master-password and <prefix>/redis/auth-token.
+externalSecrets:
+  enabled: false
+  secretPrefix: ""
+  region: us-west-1
+  refreshInterval: 1h
 
 # Prefer external-secrets / sealed-secrets in real deployments.
 secrets:
