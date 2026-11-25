@@ -18,8 +18,8 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
-        runAsUser: 1000
-        fsGroup: 1000
+        runAsUser: {{ .Values.podSecurity.runAsUser }}
+        fsGroup: {{ .Values.podSecurity.runAsUser }}
         seccompProfile: { type: RuntimeDefault }
       containers:
         - name: studio
@@ -28,7 +28,7 @@ spec:
           ports:
             - { name: http, containerPort: 3000 }
           env:
-            - { name: NEXT_PUBLIC_API_URL, value: "https://{{ .Values.global.domain.api }}" }
+            - { name: NEXT_PUBLIC_API_URL, value: {{ .Values.studio.apiUrl | default (printf "https://%s" .Values.global.domain.api) | quote }} }
             - { name: PORT, value: "3000" }
           resources: {{- toYaml .Values.studio.resources | nindent 12 }}
           readinessProbe: { httpGet: { path: /, port: http }, periodSeconds: 5 }
@@ -61,8 +61,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ .Release.Name }}-studio
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
+  annotations: {{- toYaml .Values.studio.ingress.annotations | nindent 4 }}
 spec:
   ingressClassName: {{ .Values.studio.ingress.className }}
   {{- if .Values.studio.ingress.tls }}
@@ -71,7 +70,9 @@ spec:
       secretName: {{ .Release.Name }}-studio-tls
   {{- end }}
   rules:
-    - host: {{ .Values.global.domain.studio }}
+    - {{- with .Values.global.domain.studio }}
+      host: {{ . }}
+      {{- end }}
       http:
         paths:
           - path: /

@@ -4,10 +4,18 @@ metadata:
   name: {{ .Release.Name }}-config
   labels: {{- include "agentforge.labels" . | nindent 4 }}
 data:
+  {{- /* External Redis/Postgres (ElastiCache/RDS): REDIS_URL / DATABASE_URL
+         come from the <release>-secrets Secret instead, since they carry passwords. */}}
+  {{- if .Values.redis.enabled }}
   REDIS_URL: "redis://{{ .Release.Name }}-redis:6379"
+  {{- end }}
+  {{- if .Values.postgres.enabled }}
   DATABASE_URL: "postgresql://agentforge:agentforge@{{ .Release.Name }}-postgres:5432/agentforge"
+  {{- end }}
+  {{- if .Values.otelCollector.enabled }}
   OTEL_EXPORTER_OTLP_ENDPOINT: "http://{{ .Release.Name }}-otel-collector:4318"
   OTEL_SERVICE_NAME: "agentforge"
+  {{- end }}
   API_GATEWAY_PORT: "3000"
   WORKER_PORT: "3001"
   {{- range $k, $v := .Values.config }}
