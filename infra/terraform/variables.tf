@@ -11,7 +11,7 @@ variable "env" {
 }
 
 variable "cluster_name" {
-  description = "EKS cluster name. Final name is \"agentforge-${env}-${cluster_name}\"."
+  description = "EKS cluster name. Final name is \"agentforge-$${env}-$${cluster_name}\"."
   type        = string
   default     = "agentforge"
 }
@@ -87,12 +87,24 @@ variable "db_deletion_protection" {
   default = false
 }
 
+variable "db_performance_insights" {
+  description = "RDS Performance Insights. Off in staging (smallest classes may not support it; extra cost)."
+  type        = bool
+  default     = true
+}
+
 variable "db_backup_retention_days" {
   type    = number
   default = 7
 }
 
 # ── ElastiCache (Redis) ────────────────────────────────────────────
+variable "enable_elasticache" {
+  description = "Create ElastiCache Redis. Off in staging: Redis runs in the cluster instead."
+  type        = bool
+  default     = true
+}
+
 variable "redis_engine_version" {
   type    = string
   default = "7.1"

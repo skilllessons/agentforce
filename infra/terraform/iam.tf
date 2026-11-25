@@ -28,11 +28,13 @@ data "aws_iam_policy_document" "app_runtime" {
       "secretsmanager:GetSecretValue",
       "secretsmanager:DescribeSecret",
     ]
-    resources = [
-      aws_secretsmanager_secret.app.arn,
-      aws_secretsmanager_secret.db_master.arn,
-      aws_secretsmanager_secret.redis_auth.arn,
-    ]
+    resources = concat(
+      [
+        aws_secretsmanager_secret.app.arn,
+        aws_secretsmanager_secret.db_master.arn,
+      ],
+      aws_secretsmanager_secret.redis_auth[*].arn, # empty when ElastiCache is off
+    )
   }
 }
 

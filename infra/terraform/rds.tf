@@ -111,7 +111,7 @@ resource "aws_db_instance" "main" {
   backup_window           = "07:00-08:00"
   maintenance_window      = "sun:08:30-sun:09:30"
 
-  performance_insights_enabled = true
+  performance_insights_enabled = var.db_performance_insights
   monitoring_interval          = 60
   monitoring_role_arn          = aws_iam_role.rds_monitoring.arn
 
