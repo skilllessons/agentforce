@@ -179,6 +179,8 @@ Upload policy + state filing requirements → [Ready to file in CA?]
 
 **Decided 2026-11-24:** EKS, region **`us-west-1`**, budget **$170–200 a month**.
 
+**Decided 2026-11-25: session staging.** The account is on the AWS free plan with **$120 of credits** (expires 2027-04-10); always-on staging would use them in ~20 days, and scale-to-zero still costs ~$125/mo (EKS control plane, NAT, ALB). So staging is **created when testing and destroyed when done**: ~20 min up, ~10 min down, ≈ $0.25 per hour while up. Staging data is wiped on every `down` (fine: no customers). The state bucket (bootstrap) is never destroyed. Move to always-on (paid plan) when there are users. If EKS turns out to be restricted on the free plan, the first `apply` fails and the account must be upgraded first.
+
 | Item | Staging size | ~$/month |
 |---|---|---|
 | EKS control plane | 1 cluster | 73 |
@@ -189,7 +191,8 @@ Upload policy + state filing requirements → [Ready to file in CA?]
 | ALB | 1 | 18 |
 | S3, ECR, secrets, logs | small | 10 |
 | **Total running** | | **~$180** |
-| Nodes scaled to 0 (nights, weekends) | | ~$150 |
+| Nodes scaled to 0 (not used: see session staging) | | ~$150 |
+| **Session staging, ~40 h/month up** | | **~$10** |
 
 Prices are approximate on-demand estimates; confirm in the AWS Pricing Calculator. Claude API usage is separate.
 
@@ -203,11 +206,11 @@ Prices are approximate on-demand estimates; confirm in the AWS Pricing Calculato
 - [ ] **M3.0.5a** Cluster add-ons via Helm: AWS Load Balancer Controller (needed for the `alb` ingress) and external-secrets operator; Terraform already creates both IRSA roles — done when an `alb` Ingress gets an address and an ExternalSecret syncs · `claude`
 - [ ] **M3.0.6** Helm CronJobs for the reaper and the Zendesk poller (none exist today) — done when both run on schedule in staging · `claude`
 - [ ] **M3.0.7** Secrets (Anthropic key, DB password) from Secrets Manager into the cluster via external-secrets (Terraform already has its IAM role), never in git — done when the pods start with no plaintext secrets in the repo · `claude`
-- [ ] **M3.0.8** CI: build and push the api, worker, migrate **and studio** images to ECR; deploy with `helm upgrade` on merge to `main` (GitHub OIDC role, no long-lived keys) — done when a merge reaches staging automatically · `claude`
+- [ ] **M3.0.8** CI: build and push the api, worker, migrate **and studio** images to ECR (add the `studio` repo; build the studio with `NEXT_PUBLIC_API_URL` set, since rewrites are baked at build time). Deploy with `helm upgrade` on merge to `main` **only when staging is up** (the job skips cleanly if the cluster doesn't exist), plus a manual "deploy now" trigger. GitHub OIDC role, no long-lived keys — done when a merge reaches a running staging automatically, and a merge with staging down passes CI · `claude`
 - [ ] **M3.0.9** Smoke test after every deploy ($0): `/health` → 200; a scripted-LLM support run → `completed`; the studio home page loads — done when a failing smoke test fails the CI job · `claude`
-- [ ] **M3.0.10** Start/stop: `make staging-stop` (nodes → 0) and `make staging-start` (nodes → 1), plus an optional schedule for nights and weekends — done when a stop → start cycle comes back healthy within 5 min · `claude`
+- [ ] **M3.0.10** `make staging-up` / `make staging-down` (session staging). `down` must: uninstall the Helm release first (the ALB is created by the controller, not Terraform, and blocks VPC deletion), then `terraform destroy` everything except the state bucket. ECR `force_delete` outside prod so `destroy` doesn't fail on stored images (CI rebuilds them) — done when up → smoke test → down → up again works, and the AWS bill shows nothing left running after `down` · `claude`
 - [ ] **M3.0.11** RDS automated backups (7 days) + a tested restore — done when a restore to a new instance works · `claude`
-- [ ] **M3.0.12** Milestone check — done when a merge to `main` updates staging in ≤ 15 min with the smoke test green, and the URL is unreachable from outside the allowlist · `you`
+- [ ] **M3.0.12** Milestone check — done when `make staging-up` brings staging up from nothing, a merge to `main` then reaches it in ≤ 15 min with the smoke test green, the URL is unreachable from outside the allowlist, and `make staging-down` leaves nothing billing · `you`
 
 ---
 
