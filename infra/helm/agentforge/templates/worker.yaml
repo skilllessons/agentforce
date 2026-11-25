@@ -1,38 +1,42 @@
 {{- if .Values.worker.enabled }}
+{{- /* One Deployment per vertical: `agentforge-worker <vertical>` drains only
+       that vertical's Redis queue (platform/worker/main.py). The worker serves
+       no port (it blocks in BRPOP), so there are no HTTP probes: a crashed
+       process exits and Kubernetes restarts it. */}}
+{{- range $vertical := .Values.worker.verticals }}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-worker
-  labels: {{- include "agentforge.labels" . | nindent 4 }}
+  name: {{ $.Release.Name }}-worker-{{ $vertical }}
+  labels: {{- include "agentforge.labels" $ | nindent 4 }}
 spec:
-  replicas: {{ .Values.worker.replicas }}
+  replicas: {{ $.Values.worker.replicas }}
   selector:
     matchLabels:
       app.kubernetes.io/name: worker
-      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/instance: {{ $.Release.Name }}
+      agentforge.io/vertical: {{ $vertical }}
   template:
     metadata:
       labels:
         app.kubernetes.io/name: worker
-        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/instance: {{ $.Release.Name }}
+        agentforge.io/vertical: {{ $vertical }}
     spec:
-      terminationGracePeriodSeconds: {{ .Values.worker.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ $.Values.worker.terminationGracePeriodSeconds }}
       securityContext:
         runAsNonRoot: true
-        runAsUser: 1000
-        fsGroup: 1000
+        runAsUser: {{ $.Values.podSecurity.runAsUser }}
+        fsGroup: {{ $.Values.podSecurity.runAsUser }}
         seccompProfile: { type: RuntimeDefault }
       containers:
         - name: worker
-          image: {{ include "agentforge.image" (dict "Values" .Values "global" .Values.global "component" "worker") }}
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          ports:
-            - { name: http, containerPort: 3001 }
-          {{- include "agentforge.envFrom" . | nindent 10 }}
-          resources: {{- toYaml .Values.worker.resources | nindent 12 }}
-          startupProbe: { httpGet: { path: /healthz, port: http }, failureThreshold: 30, periodSeconds: 2 }
-          readinessProbe: { httpGet: { path: /readyz, port: http }, periodSeconds: 5 }
-          livenessProbe: { httpGet: { path: /healthz, port: http }, periodSeconds: 15 }
+          image: {{ include "agentforge.image" (dict "Values" $.Values "global" $.Values.global "component" "worker") }}
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          args: [{{ $vertical | quote }}]
+          {{- include "agentforge.envFrom" $ | nindent 10 }}
+          resources: {{- toYaml $.Values.worker.resources | nindent 12 }}
           lifecycle:
             preStop:
               exec: { command: ["/bin/sh", "-c", "sleep 30"] }
@@ -44,23 +48,24 @@ spec:
             - { name: tmp, mountPath: /tmp }
       volumes:
         - { name: tmp, emptyDir: {} }
-{{- if .Values.worker.autoscaling.enabled }}
+{{- if $.Values.worker.autoscaling.enabled }}
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ .Release.Name }}-worker
+  name: {{ $.Release.Name }}-worker-{{ $vertical }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ .Release.Name }}-worker
-  minReplicas: {{ .Values.worker.autoscaling.minReplicas }}
-  maxReplicas: {{ .Values.worker.autoscaling.maxReplicas }}
+    name: {{ $.Release.Name }}-worker-{{ $vertical }}
+  minReplicas: {{ $.Values.worker.autoscaling.minReplicas }}
+  maxReplicas: {{ $.Values.worker.autoscaling.maxReplicas }}
   metrics:
     - type: Resource
       resource:
         name: cpu
-        target: { type: Utilization, averageUtilization: {{ .Values.worker.autoscaling.targetCPUUtilization }} }
+        target: { type: Utilization, averageUtilization: {{ $.Values.worker.autoscaling.targetCPUUtilization }} }
+{{- end }}
 {{- end }}
 {{- end }}

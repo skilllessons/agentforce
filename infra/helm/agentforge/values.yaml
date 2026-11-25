@@ -10,9 +10,20 @@ image:
   tag: latest
   pullPolicy: IfNotPresent
 
+# Must match the image's user (Dockerfile: useradd --uid 10001 app).
+podSecurity:
+  runAsUser: 10001
+
+# Runs agentforge-migrate as a pre-install/pre-upgrade hook. Independent of
+# postgres.enabled: with an external database (RDS) it still has to run.
+migrate:
+  enabled: true
+
 apiGateway:
   enabled: true
   replicas: 2
+  containerPort: 8000   # uvicorn in api_gateway/main.py
+  healthPath: /health
   resources:
     requests: { cpu: 200m, memory: 256Mi }
     limits:   { cpu: 1000m, memory: 768Mi }
@@ -29,9 +40,13 @@ apiGateway:
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-prod
     tls: true
+    paths: ["/"]
 
 worker:
   enabled: true
+  # One Deployment per vertical: `agentforge-worker <vertical>` drains that
+  # vertical's queue only.
+  verticals: [insurance]
   replicas: 3
   resources:
     requests: { cpu: 300m, memory: 512Mi }
@@ -46,17 +61,22 @@ worker:
 studio:
   enabled: true
   replicas: 2
+  # Where the studio's server-side proxy sends API calls. Empty = https://<global.domain.api>.
+  apiUrl: ""
   resources:
     requests: { cpu: 100m, memory: 192Mi }
     limits:   { cpu: 500m, memory: 512Mi }
   ingress:
     enabled: true
     className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
     tls: true
 
 redis:
   enabled: true
   storage: 5Gi
+  storageClass: ""   # empty = the cluster's default StorageClass
   resources:
     requests: { cpu: 100m, memory: 256Mi }
     limits:   { cpu: 500m, memory: 640Mi }
@@ -77,8 +97,18 @@ config:
   ANTHROPIC_DEFAULT_MODEL: claude-opus-4-7
   RATE_LIMIT_MAX: "60"
   S3_BUCKET: agentforge-files
-  S3_REGION: us-east-1
+  S3_REGION: us-west-1
   MAX_UPLOAD_BYTES: "33554432"
+
+# Sync <release>-secrets from AWS Secrets Manager (templates/external-secrets.yaml).
+# Needs the external-secrets operator (Terraform addons.tf). secretPrefix is
+# Terraform's local.name; the secrets are <prefix>/app/runtime,
+# <prefix>/rds/master-password and <prefix>/redis/auth-token.
+externalSecrets:
+  enabled: false
+  secretPrefix: ""
+  region: us-west-1
+  refreshInterval: 1h
 
 # Prefer external-secrets / sealed-secrets in real deployments.
 secrets:

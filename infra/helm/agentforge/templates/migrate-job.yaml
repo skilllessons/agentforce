@@ -1,4 +1,4 @@
-{{- if .Values.postgres.enabled }}
+{{- if .Values.migrate.enabled }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -19,9 +19,10 @@ spec:
       restartPolicy: OnFailure
       securityContext:
         runAsNonRoot: true
-        runAsUser: 1000
-        fsGroup: 1000
+        runAsUser: {{ .Values.podSecurity.runAsUser }}
+        fsGroup: {{ .Values.podSecurity.runAsUser }}
         seccompProfile: { type: RuntimeDefault }
+      {{- if .Values.postgres.enabled }}
       initContainers:
         - name: wait-for-postgres
           image: busybox:1.37
@@ -32,6 +33,7 @@ spec:
               until nc -z {{ .Release.Name }}-postgres 5432; do
                 echo "waiting for postgres..."; sleep 2;
               done
+      {{- end }}
       containers:
         - name: migrate
           image: {{ include "agentforge.image" (dict "Values" .Values "global" .Values.global "component" "migrate") }}

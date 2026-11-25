@@ -33,7 +33,7 @@ resource "aws_secretsmanager_secret_version" "db_master" {
 
 resource "aws_security_group" "rds" {
   name        = "${local.name}-rds"
-  description = "AgentForge RDS — accessible from EKS nodes only"
+  description = "AgentForge RDS - accessible from EKS nodes only" # ASCII only: EC2 rejects other characters
   vpc_id      = module.vpc.vpc_id
 
   ingress {
@@ -97,10 +97,10 @@ resource "aws_db_instance" "main" {
   password = random_password.db_master.result
   port     = 5432
 
-  multi_az               = var.db_multi_az
-  publicly_accessible    = false
-  deletion_protection    = var.db_deletion_protection
-  skip_final_snapshot    = var.env != "prod"
+  multi_az                  = var.db_multi_az
+  publicly_accessible       = false
+  deletion_protection       = var.db_deletion_protection
+  skip_final_snapshot       = var.env != "prod"
   final_snapshot_identifier = var.env == "prod" ? "${local.name}-pg-final-${formatdate("YYYYMMDDhhmmss", timestamp())}" : null
 
   db_subnet_group_name   = module.vpc.database_subnet_group_name
@@ -111,9 +111,9 @@ resource "aws_db_instance" "main" {
   backup_window           = "07:00-08:00"
   maintenance_window      = "sun:08:30-sun:09:30"
 
-  performance_insights_enabled = true
-  monitoring_interval          = 60
-  monitoring_role_arn          = aws_iam_role.rds_monitoring.arn
+  performance_insights_enabled = var.db_performance_insights
+  monitoring_interval          = var.db_monitoring_interval
+  monitoring_role_arn          = var.db_monitoring_interval > 0 ? aws_iam_role.rds_monitoring.arn : null
 
   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
 

@@ -28,3 +28,11 @@ venv/
 # Generated eval reports (keep golden_queries.json + run_evals.py, ignore run outputs)
 src/agentforge/verticals/insurance/eval/reports/
 src/agentforge/verticals/support/eval/reports/
+
+# Terraform: provider caches, state (holds secrets), per-env backend config (holds the account id)
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+infra/terraform/envs/*/backend.hcl

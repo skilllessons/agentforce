@@ -1,30 +1,29 @@
 # syntax=docker/dockerfile:1.7
-FROM node:20-alpine AS base
-RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
-WORKDIR /workspace
-
-FROM base AS deps
-COPY pnpm-workspace.yaml package.json ./
-COPY apps/studio/package.json apps/studio/
-RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
-    pnpm install --filter @agentforge/studio... --prefer-offline
+# Build context: apps/studio (the studio is a standalone npm project).
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package.json package-lock.json .npmrc ./
+RUN --mount=type=cache,target=/root/.npm npm ci
 
 FROM deps AS build
-COPY apps/studio ./apps/studio
-WORKDIR /workspace/apps/studio
+COPY . .
+# Next.js bakes NEXT_PUBLIC_* in at build time (next.config.js rewrites).
+# Staging passes the in-cluster Service: http://agentforge-api-gateway
+ARG NEXT_PUBLIC_API_URL=http://localhost:8000
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN pnpm build
+RUN npm run build
 
 FROM node:20-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup -S app && adduser -S app -G app
-COPY --from=build --chown=app:app /workspace/apps/studio/.next/standalone /app
-COPY --from=build --chown=app:app /workspace/apps/studio/.next/static /app/apps/studio/.next/static
-COPY --from=build --chown=app:app /workspace/apps/studio/public /app/apps/studio/public
+COPY --from=build --chown=app:app /app/.next/standalone /app
+COPY --from=build --chown=app:app /app/.next/static /app/.next/static
+COPY --from=build --chown=app:app /app/public /app/public
 USER app
 EXPOSE 3000
 HEALTHCHECK --interval=15s --timeout=3s --start-period=20s \
   CMD wget -qO- http://127.0.0.1:3000/ || exit 1
-CMD ["node", "apps/studio/server.js"]
+CMD ["node", "server.js"]

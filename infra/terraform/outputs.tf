@@ -11,6 +11,6 @@ output "cluster_certificate_authority_data" {
   sensitive = true
 }
 
-output "outputs_bucket" {
-  value = aws_s3_bucket.outputs.bucket
+output "files_bucket" {
+  value = aws_s3_bucket.files.bucket
 }

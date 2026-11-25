@@ -28,11 +28,13 @@ data "aws_iam_policy_document" "app_runtime" {
       "secretsmanager:GetSecretValue",
       "secretsmanager:DescribeSecret",
     ]
-    resources = [
-      aws_secretsmanager_secret.app.arn,
-      aws_secretsmanager_secret.db_master.arn,
-      aws_secretsmanager_secret.redis_auth.arn,
-    ]
+    resources = concat(
+      [
+        aws_secretsmanager_secret.app.arn,
+        aws_secretsmanager_secret.db_master.arn,
+      ],
+      aws_secretsmanager_secret.redis_auth[*].arn, # empty when ElastiCache is off
+    )
   }
 }
 
@@ -48,7 +50,7 @@ module "irsa_api_gateway" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
   version = "~> 5.48"
 
-  role_name      = "${local.name}-api-gateway"
+  role_name = "${local.name}-api-gateway"
   role_policy_arns = {
     runtime = aws_iam_policy.app_runtime.arn
   }
@@ -68,7 +70,7 @@ module "irsa_worker" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
   version = "~> 5.48"
 
-  role_name      = "${local.name}-worker"
+  role_name = "${local.name}-worker"
   role_policy_arns = {
     runtime = aws_iam_policy.app_runtime.arn
   }

@@ -1,0 +1,9 @@
+# Copy to backend.hcl (gitignored: it holds the account id) and set `bucket`
+# from:  terraform -chdir=infra/terraform/bootstrap output state_bucket
+#
+#   terraform -chdir=infra/terraform init -backend-config=envs/staging/backend.hcl
+bucket       = "agentforge-tfstate-<ACCOUNT_ID>"
+key          = "staging/terraform.tfstate"
+region       = "us-west-1"
+encrypt      = true
+use_lockfile = true # lock = staging/terraform.tfstate.tflock, present only while a run is in progress

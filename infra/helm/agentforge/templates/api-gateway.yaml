@@ -18,20 +18,20 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
-        runAsUser: 1000
-        fsGroup: 1000
+        runAsUser: {{ .Values.podSecurity.runAsUser }}
+        fsGroup: {{ .Values.podSecurity.runAsUser }}
         seccompProfile: { type: RuntimeDefault }
       containers:
         - name: api-gateway
           image: {{ include "agentforge.image" (dict "Values" .Values "global" .Values.global "component" "api-gateway") }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-            - { name: http, containerPort: 3000 }
+            - { name: http, containerPort: {{ .Values.apiGateway.containerPort }} }
           {{- include "agentforge.envFrom" . | nindent 10 }}
           resources: {{- toYaml .Values.apiGateway.resources | nindent 12 }}
-          startupProbe: { httpGet: { path: /healthz, port: http }, failureThreshold: 30, periodSeconds: 2 }
-          readinessProbe: { httpGet: { path: /readyz, port: http }, periodSeconds: 5 }
-          livenessProbe: { httpGet: { path: /healthz, port: http }, periodSeconds: 15 }
+          startupProbe: { httpGet: { path: {{ .Values.apiGateway.healthPath }}, port: http }, failureThreshold: 30, periodSeconds: 2 }
+          readinessProbe: { httpGet: { path: {{ .Values.apiGateway.healthPath }}, port: http }, periodSeconds: 5 }
+          livenessProbe: { httpGet: { path: {{ .Values.apiGateway.healthPath }}, port: http }, periodSeconds: 15 }
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -51,7 +51,7 @@ spec:
     app.kubernetes.io/name: api-gateway
     app.kubernetes.io/instance: {{ .Release.Name }}
   ports:
-    - { name: http, port: {{ .Values.apiGateway.service.port }}, targetPort: 3000 }
+    - { name: http, port: {{ .Values.apiGateway.service.port }}, targetPort: {{ .Values.apiGateway.containerPort }} }
 {{- if .Values.apiGateway.autoscaling.enabled }}
 ---
 apiVersion: autoscaling/v2
@@ -86,14 +86,18 @@ spec:
       secretName: {{ .Release.Name }}-api-tls
   {{- end }}
   rules:
-    - host: {{ .Values.global.domain.api }}
+    - {{- with .Values.global.domain.api }}
+      host: {{ . }}
+      {{- end }}
       http:
         paths:
-          - path: /
+          {{- range .Values.apiGateway.ingress.paths }}
+          - path: {{ . }}
             pathType: Prefix
             backend:
               service:
-                name: {{ .Release.Name }}-api-gateway
-                port: { number: {{ .Values.apiGateway.service.port }} }
+                name: {{ $.Release.Name }}-api-gateway
+                port: { number: {{ $.Values.apiGateway.service.port }} }
+          {{- end }}
 {{- end }}
 {{- end }}

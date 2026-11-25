@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.6.0"
+  required_version = ">= 1.10.0" # S3 native state locking (use_lockfile)
 
   required_providers {
     aws = {
@@ -24,16 +24,11 @@ terraform {
     }
   }
 
-  # NOTE: configure remote state in a backend.tf you keep out of version control
-  # for credentials reasons. Example:
-  #
-  # backend "s3" {
-  #   bucket         = "agentforge-tfstate-<account-id>"
-  #   key            = "envs/dev/terraform.tfstate"
-  #   region         = "us-east-1"
-  #   dynamodb_table = "agentforge-tfstate-locks"
-  #   encrypt        = true
-  # }
+  # Remote state in S3 with lockfile locking. Left empty on purpose: the
+  # bucket name holds the account id, so each env supplies it at init from a
+  # gitignored file (see envs/<env>/backend.hcl.example):
+  #   terraform init -backend-config=envs/staging/backend.hcl
+  backend "s3" {}
 }
 
 provider "aws" {

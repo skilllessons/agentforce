@@ -1,7 +1,7 @@
 variable "region" {
   description = "AWS region for all resources."
   type        = string
-  default     = "us-east-1"
+  default     = "us-west-1"
 }
 
 variable "env" {
@@ -11,7 +11,7 @@ variable "env" {
 }
 
 variable "cluster_name" {
-  description = "EKS cluster name. Final name is \"agentforge-${env}-${cluster_name}\"."
+  description = "EKS cluster name. Final name is \"agentforge-$${env}-$${cluster_name}\"."
   type        = string
   default     = "agentforge"
 }
@@ -57,9 +57,12 @@ variable "node_desired_size" {
 
 # ── RDS ────────────────────────────────────────────────────────────
 variable "db_engine_version" {
-  description = "Postgres major.minor. pgvector requires >= 16."
+  # Major only: RDS picks the newest 16.x, and auto minor upgrades cause no
+  # plan drift. A pinned minor goes stale (16.4 was retired; 16.11–16.15 offered
+  # in us-west-1 on 2026-11-25). pgvector requires >= 16.
+  description = "Postgres engine version (major only, e.g. \"16\")."
   type        = string
-  default     = "16.4"
+  default     = "16"
 }
 
 variable "db_instance_class" {
@@ -87,12 +90,31 @@ variable "db_deletion_protection" {
   default = false
 }
 
+variable "db_performance_insights" {
+  description = "RDS Performance Insights. Off in staging (smallest classes may not support it; extra cost)."
+  type        = bool
+  default     = true
+}
+
 variable "db_backup_retention_days" {
-  type    = number
-  default = 7
+  description = "Automated backup retention. The AWS free plan caps this (7 was refused); staging uses 1."
+  type        = number
+  default     = 7
+}
+
+variable "db_monitoring_interval" {
+  description = "RDS enhanced monitoring interval in seconds (0 = off). Off in staging: extra cost, and free-plan sensitive."
+  type        = number
+  default     = 60
 }
 
 # ── ElastiCache (Redis) ────────────────────────────────────────────
+variable "enable_elasticache" {
+  description = "Create ElastiCache Redis. Off in staging: Redis runs in the cluster instead."
+  type        = bool
+  default     = true
+}
+
 variable "redis_engine_version" {
   type    = string
   default = "7.1"
@@ -107,6 +129,25 @@ variable "redis_num_replicas" {
   description = "Number of read replicas in the replication group (0 = primary only)."
   type        = number
   default     = 1
+}
+
+# ── Cluster add-ons (addons.tf) ────────────────────────────────────
+variable "enable_addons" {
+  description = "Install the AWS Load Balancer Controller and external-secrets into the cluster."
+  type        = bool
+  default     = true
+}
+
+variable "alb_controller_chart_version" {
+  description = "eks/aws-load-balancer-controller chart. Check: helm search repo eks/aws-load-balancer-controller"
+  type        = string
+  default     = "3.7.0"
+}
+
+variable "external_secrets_chart_version" {
+  description = "external-secrets/external-secrets chart. Check: helm search repo external-secrets/external-secrets"
+  type        = string
+  default     = "2.15.0"
 }
 
 # ── DNS / TLS (optional) ───────────────────────────────────────────

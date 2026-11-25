@@ -1,0 +1,104 @@
+# Staging overrides (docs/roadmap.md, M3.0.5): EKS lite, 1 × t3.medium node,
+# RDS for Postgres, Redis in the cluster, one private ALB.
+#
+#   helm upgrade --install agentforge infra/helm/agentforge \
+#     -f infra/helm/agentforge/values-staging.yaml \
+#     --set global.imageRegistry=<ACCOUNT_ID>.dkr.ecr.us-west-1.amazonaws.com \
+#     --set image.tag=<git sha> \
+#     --set-string 'apiGateway.ingress.annotations.alb\.ingress\.kubernetes\.io/inbound-cidrs=<YOUR_IP>/32' \
+#     --set-string 'studio.ingress.annotations.alb\.ingress\.kubernetes\.io/inbound-cidrs=<YOUR_IP>/32'
+#
+# Needs in the cluster first (M3.0.5a): AWS Load Balancer Controller, and the
+# <release>-secrets Secret (external-secrets, M3.0.7) holding ANTHROPIC_API_KEY
+# and DATABASE_URL (the RDS URL, with ?sslmode=require — RDS forces SSL).
+
+global:
+  imageRegistry: ""          # set with --set: <ACCOUNT_ID>.dkr.ecr.us-west-1.amazonaws.com
+  domain:
+    api: ""                  # no domain yet: the ALB's AWS hostname is used
+    studio: ""
+
+image:
+  tag: latest                # CI sets the git sha (M3.0.8)
+
+apiGateway:
+  replicas: 1
+  autoscaling: { enabled: false }
+  resources:
+    requests: { cpu: 100m, memory: 192Mi }
+    limits:   { cpu: 500m, memory: 512Mi }
+  ingress:
+    enabled: true
+    className: alb
+    tls: false               # HTTP only until there's a domain + ACM certificate
+    paths: ["/v1", "/health"]
+    annotations:
+      cert-manager.io/cluster-issuer: null   # drop the default's annotation (no cert-manager here)
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+      alb.ingress.kubernetes.io/healthcheck-path: /health
+      # api and studio share ONE ALB (~$18/mo instead of two); /v1 and /health
+      # are matched before the studio's catch-all "/".
+      alb.ingress.kubernetes.io/group.name: agentforge-staging
+      alb.ingress.kubernetes.io/group.order: "10"
+      # Private until M6 auth. Fails closed: 203.0.113.0/24 is a documentation
+      # range nobody owns, so nothing gets in until you --set your own IP.
+      alb.ingress.kubernetes.io/inbound-cidrs: 203.0.113.10/32
+
+worker:
+  verticals: [insurance, support]
+  replicas: 1
+  autoscaling: { enabled: false }
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits:   { cpu: 500m, memory: 768Mi }
+
+studio:
+  replicas: 1
+  # The studio's server-side proxy talks to the API inside the cluster, so the
+  # API never has to be reached through the internet by the studio.
+  # NOTE: next.config.js rewrites read this at BUILD time; the studio image
+  # must be built with the same value (M3.0.8).
+  apiUrl: http://agentforge-api-gateway
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits:   { cpu: 300m, memory: 384Mi }
+  ingress:
+    enabled: true
+    className: alb
+    tls: false
+    annotations:
+      cert-manager.io/cluster-issuer: null   # drop the default's annotation (no cert-manager here)
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+      alb.ingress.kubernetes.io/healthcheck-path: /
+      alb.ingress.kubernetes.io/group.name: agentforge-staging
+      alb.ingress.kubernetes.io/group.order: "20"
+      alb.ingress.kubernetes.io/inbound-cidrs: 203.0.113.10/32
+
+redis:
+  enabled: true              # in the cluster; ElastiCache is off in staging.tfvars
+  storage: 2Gi
+  storageClass: gp2          # EKS's EBS class; newer clusters may not mark a default
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits:   { cpu: 250m, memory: 640Mi }
+
+postgres:
+  enabled: false             # RDS instead; DATABASE_URL comes from the Secret
+
+otelCollector:
+  enabled: false             # not wired (CLAUDE.md: OTel installed, no exporter)
+
+externalSecrets:
+  enabled: true
+  secretPrefix: agentforge-staging-core   # Terraform local.name for staging.tfvars
+  region: us-west-1
+
+config:
+  ENV: staging               # core/config.py `env`
+  NODE_ENV: staging
+  S3_REGION: us-west-1
+  S3_BUCKET: ""              # the files bucket name from `terraform output files_bucket`
