@@ -50,7 +50,7 @@ module "irsa_api_gateway" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
   version = "~> 5.48"
 
-  role_name      = "${local.name}-api-gateway"
+  role_name = "${local.name}-api-gateway"
   role_policy_arns = {
     runtime = aws_iam_policy.app_runtime.arn
   }
@@ -70,7 +70,7 @@ module "irsa_worker" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
   version = "~> 5.48"
 
-  role_name      = "${local.name}-worker"
+  role_name = "${local.name}-worker"
   role_policy_arns = {
     runtime = aws_iam_policy.app_runtime.arn
   }

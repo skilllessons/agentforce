@@ -87,7 +87,7 @@ resource "aws_elasticache_replication_group" "main" {
   parameter_group_name = aws_elasticache_parameter_group.main[0].name
   port                 = 6379
 
-  num_cache_clusters = 1 + var.redis_num_replicas
+  num_cache_clusters         = 1 + var.redis_num_replicas
   automatic_failover_enabled = var.redis_num_replicas > 0
   multi_az_enabled           = var.redis_num_replicas > 0
 

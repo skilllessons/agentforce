@@ -97,10 +97,10 @@ resource "aws_db_instance" "main" {
   password = random_password.db_master.result
   port     = 5432
 
-  multi_az               = var.db_multi_az
-  publicly_accessible    = false
-  deletion_protection    = var.db_deletion_protection
-  skip_final_snapshot    = var.env != "prod"
+  multi_az                  = var.db_multi_az
+  publicly_accessible       = false
+  deletion_protection       = var.db_deletion_protection
+  skip_final_snapshot       = var.env != "prod"
   final_snapshot_identifier = var.env == "prod" ? "${local.name}-pg-final-${formatdate("YYYYMMDDhhmmss", timestamp())}" : null
 
   db_subnet_group_name   = module.vpc.database_subnet_group_name

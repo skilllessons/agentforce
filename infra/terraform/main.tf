@@ -7,6 +7,9 @@ locals {
   private_subnets  = [for i in range(var.az_count) : cidrsubnet(var.vpc_cidr, 4, i)]
   public_subnets   = [for i in range(var.az_count) : cidrsubnet(var.vpc_cidr, 4, i + 8)]
   database_subnets = [for i in range(var.az_count) : cidrsubnet(var.vpc_cidr, 8, i + 192)]
+  # Own range: reusing database_subnets created two subnets with the same CIDR,
+  # which AWS rejects (InvalidSubnet.Conflict).
+  elasticache_subnets = [for i in range(var.az_count) : cidrsubnet(var.vpc_cidr, 8, i + 200)]
 }
 
 # ───────────────────────────────────────────────────────────────────
@@ -20,13 +23,13 @@ module "vpc" {
   cidr = var.vpc_cidr
   azs  = local.azs
 
-  private_subnets   = local.private_subnets
-  public_subnets    = local.public_subnets
-  database_subnets  = local.database_subnets
-  elasticache_subnets = local.database_subnets
+  private_subnets     = local.private_subnets
+  public_subnets      = local.public_subnets
+  database_subnets    = local.database_subnets
+  elasticache_subnets = var.enable_elasticache ? local.elasticache_subnets : []
 
-  create_database_subnet_group     = true
-  create_elasticache_subnet_group  = true
+  create_database_subnet_group    = true
+  create_elasticache_subnet_group = var.enable_elasticache
 
   enable_nat_gateway     = true
   single_nat_gateway     = var.env != "prod" # cost-saving in non-prod
@@ -36,13 +39,13 @@ module "vpc" {
   enable_dns_support   = true
 
   public_subnet_tags = {
-    "kubernetes.io/role/elb"                        = 1
-    "kubernetes.io/cluster/${local.name}"           = "shared"
+    "kubernetes.io/role/elb"              = 1
+    "kubernetes.io/cluster/${local.name}" = "shared"
   }
 
   private_subnet_tags = {
-    "kubernetes.io/role/internal-elb"               = 1
-    "kubernetes.io/cluster/${local.name}"           = "shared"
+    "kubernetes.io/role/internal-elb"     = 1
+    "kubernetes.io/cluster/${local.name}" = "shared"
   }
 
   tags = local.tags
@@ -81,7 +84,7 @@ module "eks" {
       addon_version = null
     }
     aws-ebs-csi-driver = {
-      addon_version = null
+      addon_version            = null
       service_account_role_arn = module.ebs_csi_irsa.iam_role_arn
     }
   }

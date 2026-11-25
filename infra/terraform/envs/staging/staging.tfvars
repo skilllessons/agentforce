@@ -11,11 +11,12 @@ region       = "us-west-1"
 # us-west-1 exposes 2 AZs to most accounts; the default of 3 fails.
 az_count = 2
 
-# Must be a version in EKS *standard* support: extended support bills the
+# Must be a version in EKS *standard* support (not the oldest one, which
+# moves to extended support first): extended support bills the
 # control plane at ~6x. Confirm before the first apply:
 #   aws eks describe-cluster-versions --region us-west-1 --profile agentforge \
 #     --query "clusterVersions[?versionStatus=='STANDARD_SUPPORT'].clusterVersion"
-kubernetes_version = "1.34"
+kubernetes_version = "1.36"
 
 # One small node; min 0 so `make staging-stop` can scale it away.
 node_instance_type = "t3.medium"

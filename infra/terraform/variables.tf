@@ -57,9 +57,12 @@ variable "node_desired_size" {
 
 # ── RDS ────────────────────────────────────────────────────────────
 variable "db_engine_version" {
-  description = "Postgres major.minor. pgvector requires >= 16."
+  # Major only: RDS picks the newest 16.x, and auto minor upgrades cause no
+  # plan drift. A pinned minor goes stale (16.4 was retired; 16.11–16.15 offered
+  # in us-west-1 on 2026-11-25). pgvector requires >= 16.
+  description = "Postgres engine version (major only, e.g. \"16\")."
   type        = string
-  default     = "16.4"
+  default     = "16"
 }
 
 variable "db_instance_class" {
