@@ -33,7 +33,7 @@ resource "aws_secretsmanager_secret_version" "db_master" {
 
 resource "aws_security_group" "rds" {
   name        = "${local.name}-rds"
-  description = "AgentForge RDS — accessible from EKS nodes only"
+  description = "AgentForge RDS - accessible from EKS nodes only" # ASCII only: EC2 rejects other characters
   vpc_id      = module.vpc.vpc_id
 
   ingress {
@@ -112,8 +112,8 @@ resource "aws_db_instance" "main" {
   maintenance_window      = "sun:08:30-sun:09:30"
 
   performance_insights_enabled = var.db_performance_insights
-  monitoring_interval          = 60
-  monitoring_role_arn          = aws_iam_role.rds_monitoring.arn
+  monitoring_interval          = var.db_monitoring_interval
+  monitoring_role_arn          = var.db_monitoring_interval > 0 ? aws_iam_role.rds_monitoring.arn : null
 
   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
 

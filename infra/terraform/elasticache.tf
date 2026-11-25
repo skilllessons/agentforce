@@ -39,7 +39,7 @@ resource "aws_security_group" "redis" {
   count = var.enable_elasticache ? 1 : 0
 
   name        = "${local.name}-redis"
-  description = "AgentForge Redis — accessible from EKS nodes only"
+  description = "AgentForge Redis - accessible from EKS nodes only" # ASCII only: EC2 rejects other characters
   vpc_id      = module.vpc.vpc_id
 
   ingress {

@@ -18,8 +18,12 @@ az_count = 2
 #     --query "clusterVersions[?versionStatus=='STANDARD_SUPPORT'].clusterVersion"
 kubernetes_version = "1.36"
 
-# One small node; min 0 so `make staging-stop` can scale it away.
-node_instance_type = "t3.medium"
+# One node; min 0 so it can be scaled away.
+# Must be FREE-TIER ELIGIBLE while the account is on the AWS free plan:
+# t3.medium was refused (RunInstances: "not eligible for Free Tier",
+# 2026-11-25). m7i-flex.large = x86, 2 vCPU, 8 GiB. List eligible types:
+#   aws ec2 describe-instance-types --filters Name=free-tier-eligible,Values=true
+node_instance_type = "m7i-flex.large"
 node_min_size      = 0
 node_max_size      = 2
 node_desired_size  = 1
@@ -29,6 +33,11 @@ db_instance_class       = "db.t4g.micro"
 db_storage_gb           = 20
 db_max_storage_gb       = 50
 db_performance_insights = false
+
+# AWS free plan limits (CreateDBInstance FreeTierRestrictionError, 2026-11-25):
+# backup retention 7 was refused. Enhanced monitoring off as well.
+db_backup_retention_days = 1
+db_monitoring_interval   = 0
 
 # Redis runs inside the cluster in staging; ElastiCache comes back in M7.
 enable_elasticache = false

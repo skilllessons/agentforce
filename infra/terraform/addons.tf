@@ -75,5 +75,8 @@ resource "helm_release" "external_secrets" {
     }
   })]
 
-  depends_on = [module.eks]
+  # After the ALB controller: its webhook checks every new Service, and a
+  # Service created before the webhook is answering gets rejected
+  # ("no endpoints available for service aws-load-balancer-webhook-service").
+  depends_on = [module.eks, helm_release.aws_load_balancer_controller]
 }

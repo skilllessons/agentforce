@@ -97,8 +97,15 @@ variable "db_performance_insights" {
 }
 
 variable "db_backup_retention_days" {
-  type    = number
-  default = 7
+  description = "Automated backup retention. The AWS free plan caps this (7 was refused); staging uses 1."
+  type        = number
+  default     = 7
+}
+
+variable "db_monitoring_interval" {
+  description = "RDS enhanced monitoring interval in seconds (0 = off). Off in staging: extra cost, and free-plan sensitive."
+  type        = number
+  default     = 60
 }
 
 # ── ElastiCache (Redis) ────────────────────────────────────────────
