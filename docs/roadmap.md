@@ -40,7 +40,7 @@ Set in the founder interview on 2026-11-24, after M2 merged.
 | M0 | Foundation: runtime, API, worker, studio, CI, containers | ✅ PR #1, #2 |
 | M1 | Zendesk connector: tickets into Postgres, cursor resume | ✅ PR #3, #4 |
 | M2 | Support vertical: `ticket_search`, tenant context, evals | ✅ PR #4 |
-| **M3.0** | **Staging deploy** (EKS lite, private, us-west-1) | ⬅ next |
+| **M3.0** | **Staging deploy** (EKS lite, private, us-west-1) | ⬅ in progress (infra proven 2026-11-25) |
 | M3 | Retrieval core | after M3.0 |
 | V | Validation track: 15 interviews + 1 advisor | in parallel with M3.0–M5 |
 | MT | Threads + multi-agent workspace | after M5 |
@@ -184,13 +184,13 @@ Upload policy + state filing requirements → [Ready to file in CA?]
 | Item | Staging size | ~$/month |
 |---|---|---|
 | EKS control plane | 1 cluster | 73 |
-| Node group | 1 × t3.medium (scales to 0 when idle) | 30 |
+| Node group | 1 × m7i-flex.large (free-tier eligible; scales to 0 when idle) | ~73 |
 | RDS Postgres + pgvector | db.t4g.micro, 20 GB | 15 |
 | Redis | in the cluster (ElastiCache off until M7) | 0 |
 | NAT gateway | 1 | 33 |
 | ALB | 1 | 18 |
 | S3, ECR, secrets, logs | small | 10 |
-| **Total running** | | **~$180** |
+| **Total running** | | **~$220** |
 | Nodes scaled to 0 (not used: see session staging) | | ~$150 |
 | **Session staging, ~40 h/month up** | | **~$10** |
 
@@ -201,15 +201,15 @@ Prices are approximate on-demand estimates; confirm in the AWS Pricing Calculato
 - [ ] **M3.0.1** AWS access for the CLI **without creating an Organization** (that would end the free plan and expire its credits immediately): an IAM user `agentforge-admin` with console access + MFA, CLI via `aws login --profile agentforge` (short-lived credentials; access key only as fallback); stop using root; MFA on root; a monthly budget alarm at $200 — done when `aws sts get-caller-identity --profile agentforge` works and the budget alert fires on a test · `decide`
 - [x] **M3.0.2** Terraform remote state: S3 bucket (`bootstrap/`) + **S3 lockfile** (`use_lockfile`, no DynamoDB) — code done and validated; bucket created at M3.0.4 · `claude`
 - [x] **M3.0.3** Terraform `staging.tfvars`: `env=staging`, `region=us-west-1`, **`az_count=2`** (the default of 3 fails: us-west-1 has 2 AZs for most accounts), 1 × t3.medium node group (min 0), RDS db.t4g.micro, ElastiCache off (add an enable toggle; RDS and ElastiCache have none today) — code done and validated; `plan` checked at M3.0.4 · `claude`
-- [ ] **M3.0.4** `terraform apply` staging — done when EKS, RDS (pgvector extension available), S3 and ECR exist and `kubectl get nodes` shows 1 Ready node · `you`
+- [x] **M3.0.4** `terraform apply` staging — done when EKS, RDS (pgvector extension available), S3 and ECR exist and `kubectl get nodes` shows 1 Ready node · `you` — applied 2026-11-25: 1 node Ready, RDS 16.13 available, plan clean, destroy clean (106 resources). The pgvector check moves to the first migrate job (M3.0.8)
 - [x] **M3.0.5** Helm `values-staging.yaml`: 1 replica each, Postgres → RDS, Redis in the cluster, ALB ingress with an IP allowlist — `helm lint` + `helm template` pass; pods Ready checked at M3.0.12. Also fixed a chart written for the pre-Python app: API port 3000→8000 and `/health` probes, worker HTTP probes removed (it serves no port), one worker Deployment per vertical, `runAsUser` 10001, migrations no longer skipped with RDS · `claude`
-- [ ] **M3.0.5a** Cluster add-ons via Helm: AWS Load Balancer Controller (needed for the `alb` ingress) and external-secrets operator; Terraform already creates both IRSA roles — done when an `alb` Ingress gets an address and an ExternalSecret syncs · `claude`
+- [ ] **M3.0.5a** Cluster add-ons via Helm: AWS Load Balancer Controller (needed for the `alb` ingress) and external-secrets operator; Terraform already creates both IRSA roles — done when an `alb` Ingress gets an address and an ExternalSecret syncs · `claude` — 2026-11-25: both charts install and run; the Ingress address and ExternalSecret sync are checked at the first app deploy
 - [ ] **M3.0.6** Helm CronJobs for the reaper and the Zendesk poller (none exist today) — done when both run on schedule in staging · `claude`
 - [ ] **M3.0.7** Secrets (Anthropic key, DB password) from Secrets Manager into the cluster via external-secrets (Terraform already has its IAM role), never in git — done when the pods start with no plaintext secrets in the repo · `claude`
 - [ ] **M3.0.8** CI: build and push the api, worker, migrate **and studio** images to ECR (add the `studio` repo; build the studio with `NEXT_PUBLIC_API_URL` set, since rewrites are baked at build time). Deploy with `helm upgrade` on merge to `main` **only when staging is up** (the job skips cleanly if the cluster doesn't exist), plus a manual "deploy now" trigger. GitHub OIDC role, no long-lived keys — done when a merge reaches a running staging automatically, and a merge with staging down passes CI · `claude`
 - [ ] **M3.0.9** Smoke test after every deploy ($0): `/health` → 200; a scripted-LLM support run → `completed`; the studio home page loads — done when a failing smoke test fails the CI job · `claude`
 - [ ] **M3.0.10** `make staging-up` / `make staging-down` (session staging). `down` must: uninstall the Helm release first (the ALB is created by the controller, not Terraform, and blocks VPC deletion), then `terraform destroy` everything except the state bucket. ECR `force_delete` outside prod so `destroy` doesn't fail on stored images (CI rebuilds them) — done when up → smoke test → down → up again works, and the AWS bill shows nothing left running after `down` · `claude`
-- [ ] **M3.0.11** RDS automated backups (7 days) + a tested restore — done when a restore to a new instance works · `claude`
+- [ ] **M3.0.11** RDS automated backups (1 day while on the free plan; 7 on a paid plan) + a tested restore — done when a restore to a new instance works · `claude`
 - [ ] **M3.0.12** Milestone check — done when `make staging-up` brings staging up from nothing, a merge to `main` then reaches it in ≤ 15 min with the smoke test green, the URL is unreachable from outside the allowlist, and `make staging-down` leaves nothing billing · `you`
 
 ---
@@ -382,3 +382,4 @@ Found in the repo on 2026-11-24.
 | One vertical per run; no multi-bot messages or handoffs | `routes/runs.py`, `core/runtime/loop.py` | MT.6, MT.7 |
 | Thread context is previous turns only (`history_for_thread`); no memory | `core/db/repos/runs.py` | MT.5, MT.8 |
 | Storage: CLAUDE.md says R2, Terraform provisions S3 | `CLAUDE.md`, `infra/terraform/main.tf` | M5.1 |
+| AWS free plan: only free-tier instance types (t3.medium refused); RDS backup retention capped (7 refused) | `envs/staging/staging.tfvars` | M3.0.11, M7.1 |
