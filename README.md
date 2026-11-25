@@ -91,12 +91,11 @@ High level:
 
 ## Current verticals
 
-| Vertical | Status | Data sources | Avg run time |
-|---|---|---|---|
-| Insurance | Phase 1 — building | Tavily, State DOI, NAIC, PDF parse, ISO forms | 45s est. |
-| Legal | Phase 2 — planned | CourtListener, PACER, Cornell LII, EDGAR | — |
-| Finance | Phase 2 — planned | SEC EDGAR, FRED, earnings transcripts | — |
-| Medical | Phase 3 — planned | PubMed, ClinicalTrials.gov, OpenFDA, SNOMED | — |
+| Vertical | Status | Data sources |
+|---|---|---|
+| Support | Shipped (M2) | Customer's own tickets (Zendesk), keyword search |
+| Insurance | Building | Tavily, State DOI, NAIC, PDF parse, ISO forms (stub) |
+| Legal | Planned (M9) | — |
 
 ---
 
@@ -115,12 +114,9 @@ caching, and streaming.
 
 ## Roadmap
 
-| Phase | Weeks | Goal |
-|---|---|---|
-| 0 — Foundation | 1–4 | Core agent runtime, API scaffold, Redis + OTel |
-| 1 — Insurance MVP | 5–12 | 5 tools, system prompt, 5 paying customers |
-| 2 — Revenue | 13–28 | Legal + Finance verticals, $20K MRR, 1 data partnership |
-| 3 — Platform | 29–52 | 6+ verticals, Series A, partner SDK, $100K MRR |
+A hosted, self-serve platform where customers add their own data sources (upload → app connectors → API/DB) and get cited, structured answers. Depth in legal, insurance and support.
+
+M0–M2 are done. Next: **M3.0 Staging deploy** (EKS lite in us-west-1, private, deployed on every merge), then **M3 Retrieval core**. Milestones M3–M11, granular tasks and the 7 exit criteria live in **[docs/roadmap.md](docs/roadmap.md)**.
 
 ---
 
