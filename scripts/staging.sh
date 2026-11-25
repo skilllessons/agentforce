@@ -59,6 +59,39 @@ down() {
   status
 }
 
+deploy() {
+  check_login
+  [ -z "$(git status --porcelain)" ] || fail "uncommitted changes: commit first so the image tag matches the code"
+  kubeconfig
+  local tag reg ip
+  tag=$(git rev-parse --short HEAD)
+  reg="$(aws sts get-caller-identity --query Account --output text).dkr.ecr.$REGION.amazonaws.com"
+  ip=$(curl -fsS https://checkip.amazonaws.com)
+  aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "$reg"
+
+  # ECR tags are immutable: build only what isn't pushed yet, so a re-run is safe.
+  for c in api-gateway worker migrate studio; do
+    if aws ecr describe-images --region "$REGION" --repository-name "agentforge/$c" --image-ids imageTag="$tag" >/dev/null 2>&1; then
+      echo "$c:$tag already in ECR, skip"; continue
+    fi
+    if [ "$c" = studio ]; then
+      docker buildx build --platform linux/amd64 --push -t "$reg/agentforge/studio:$tag" \
+        --build-arg NEXT_PUBLIC_API_URL=http://agentforge-api-gateway apps/studio
+    else
+      docker buildx build --platform linux/amd64 --push -t "$reg/agentforge/$c:$tag" --target "$c" .
+    fi
+  done
+
+  helm upgrade --install agentforge infra/helm/agentforge -n agentforge --create-namespace \
+    -f infra/helm/agentforge/values-staging.yaml \
+    --set global.imageRegistry="$reg" --set image.tag="$tag" \
+    --set-string "apiGateway.ingress.annotations.alb\.ingress\.kubernetes\.io/inbound-cidrs=$ip/32" \
+    --set-string "studio.ingress.annotations.alb\.ingress\.kubernetes\.io/inbound-cidrs=$ip/32" \
+    --wait --timeout 10m
+  kubectl get pods -n agentforge
+  echo "URL: http://$(kubectl get ingress -n agentforge -o jsonpath='{.items[0].status.loadBalancer.ingress[0].hostname}')"
+}
+
 show() { printf '%-16s %s\n' "$1" "${2:-(none)}"; }
 
 status() {
@@ -74,6 +107,7 @@ status() {
 case "${1:-}" in
   up) up ;;
   down) down ;;
+  deploy) deploy ;;
   status) status ;;
-  *) fail "usage: $0 up|down|status" ;;
+  *) fail "usage: $0 up|down|deploy|status" ;;
 esac

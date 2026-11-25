@@ -7,6 +7,7 @@ locals {
     "api-gateway",
     "worker",
     "migrate",
+    "studio",
   ])
 }
 
