@@ -15,6 +15,7 @@ resource "aws_ecr_repository" "service" {
 
   name                 = "agentforge/${each.value}"
   image_tag_mutability = "IMMUTABLE"
+  force_delete         = var.env != "prod" # destroy would fail on stored images; CI rebuilds them
 
   image_scanning_configuration {
     scan_on_push = true
