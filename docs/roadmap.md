@@ -261,9 +261,9 @@ Prices are approximate on-demand estimates; confirm in the AWS Pricing Calculato
 
 **Rules (from the wireframes):** context is shared inside a thread by default, never across workspaces; every handoff is visible; handoffs are capped per message and count toward the cost cap; a bot may *suggest* a workflow, a person clicks to run it.
 
-- [ ] **MT.1** Who can approve a workflow step: anyone in the workspace, or only some roles (e.g. Adjuster) — done when recorded here · `decide`
-- [ ] **MT.2** Can customers build their own workflows (a builder), or only we do — done when recorded here · `decide`
-- [ ] **MT.3** Can bots start workflows on their own (wireframe default: off) — done when recorded here · `decide`
+- [x] **MT.1** Who can approve a workflow step → **decided 2026-11-25: roles per step.** Each approval step names a role; only people with that role can approve. Start with Admin, Member, Approver; custom role names later (M6.9) · `decide`
+- [x] **MT.2** Can customers build their own workflows → **decided 2026-11-25: we build, customers configure.** Customers copy a workflow and change inputs, prompts, steps on/off and approval roles; no from-scratch builder (revisit if customers ask; full automation goes to n8n/Zapier via webhook) (M9.13) · `decide`
+- [x] **MT.3** Can bots start workflows on their own → **decided 2026-11-25: no, bots only suggest.** A bot shows a [Run /workflow] button and a person clicks (MT.9). Revisit a per-workflow "safe to auto-run" switch after real usage · `decide`
 - [ ] **MT.4** Thread files: a `thread_files` table linked to M5 `files`; attach/detach API; every bot and workflow in the thread can read them — done when a file added mid-thread is used by the next bot answer · `you`
 - [ ] **MT.5** Context assembler: thread files + earlier answers + workflow results + memory, filtered by per-bot switches (`thread_context_settings`); today only `runs.history_for_thread` exists — done when a test shows a bot with a switch off never receives that context · `you`
 - [ ] **MT.6** Several bots in one message: `@a @b …` fans out to one run per bot, linked by message id; each answer keeps its own Explain and sources; optional "combine answers" — done when two bots answer one message in the studio · `you`
@@ -287,7 +287,8 @@ Prices are approximate on-demand estimates; confirm in the AWS Pricing Calculato
 - [ ] **M6.6** Rate limits from `tenants.rate_limit_per_min` (exists, unused) + CORS — done when going over the limit returns 429 · `you`
 - [ ] **M6.7** Per-tenant daily cost cap from `tenants.daily_cost_cap_usd` (exists, unused) — done when going over the cap is rejected · `you`
 - [ ] **M6.8** Cross-tenant API tests: every route, two tenants — done when every route is covered · `claude`
-- [ ] **M6.9** Milestone check — done when `no_leak` is 100% across the API tests and every eval · `you`
+- [ ] **M6.9** Workspace roles: Admin, Member, Approver (from MT.1), assigned per person; custom role names later — done when only an Approver can approve a step in a test · `you`
+- [ ] **M6.10** Milestone check — done when `no_leak` is 100% across the API tests and every eval · `you`
 
 ## M7: Production launch (scale up)
 
@@ -328,7 +329,8 @@ Prices are approximate on-demand estimates; confirm in the AWS Pricing Calculato
 - [ ] **M9.10** Legal: system prompt, domain tools, ≥ 20 golden queries — done when recall ≥ 80%. **Lower priority** while insurance leads · `you`
 - [ ] **M9.11** Human approval step: the run pauses, only the roles from MT.1 can approve / request info / reject, the note is saved to history — done when an unapproved run never continues · `you`
 - [ ] **M9.12** Step controls: retry one step, or edit a step's input and rerun from there; workflow and bot versions pinned per run — done when a rerun keeps the earlier steps' outputs and history shows both · `you`
-- [ ] **M9.13** Milestone check — done when the lead vertical's workflows and all evaluated verticals show recall ≥ 80% and `refs_valid` 100% · `you`
+- [ ] **M9.13** Configurable workflows (from MT.2): a customer copies a workflow and edits inputs, prompts, steps on/off and approval roles; each change is a new version — done when a customised copy runs and history shows its version · `you`
+- [ ] **M9.14** Milestone check — done when the lead vertical's workflows and all evaluated verticals show recall ≥ 80% and `refs_valid` 100% · `you`
 
 ## M10: Polish + new-user test
 
