@@ -195,7 +195,7 @@ Prices are approximate on-demand estimates; confirm in the AWS Pricing Calculato
 
 **Private until M6:** there's no auth yet, so a public URL would let anyone run the agent and spend Claude credits. The ALB only accepts traffic from an IP allowlist.
 
-- [ ] **M3.0.1** AWS access for the CLI (IAM Identity Center/SSO, not the root user), MFA on root, a monthly budget alarm at $200 — done when `aws sts get-caller-identity` works and the budget alert fires on a test · `decide`
+- [ ] **M3.0.1** AWS access for the CLI **without creating an Organization** (that would end the free plan and expire its credits immediately): an IAM user `agentforge-admin` with console access + MFA, CLI via `aws login --profile agentforge` (short-lived credentials; access key only as fallback); stop using root; MFA on root; a monthly budget alarm at $200 — done when `aws sts get-caller-identity --profile agentforge` works and the budget alert fires on a test · `decide`
 - [ ] **M3.0.2** Terraform remote state: S3 bucket + DynamoDB lock table (`versions.tf` has the backend commented out) — done when `terraform init` uses remote state · `claude`
 - [ ] **M3.0.3** Terraform `staging.tfvars`: `env=staging`, `region=us-west-1`, **`az_count=2`** (the default of 3 fails: us-west-1 has 2 AZs for most accounts), 1 × t3.medium node group (min 0), RDS db.t4g.micro, ElastiCache off (add an enable toggle; RDS and ElastiCache have none today) — done when `terraform plan` shows only the staging-size resources · `claude`
 - [ ] **M3.0.4** `terraform apply` staging — done when EKS, RDS (pgvector extension available), S3 and ECR exist and `kubectl get nodes` shows 1 Ready node · `you`
@@ -298,6 +298,7 @@ Prices are approximate on-demand estimates; confirm in the AWS Pricing Calculato
 - [ ] **M7.2** `values-prod.yaml`: Postgres → RDS (with pgvector), Redis → ElastiCache, ALB ingress, more than one replica — done when every pod is Ready on EKS · `claude`
 - [ ] **M7.3** Promotion pipeline: staging is automatic, production is a manual approval of the same image — done when a promote deploys the image that staging tested · `claude`
 - [ ] **M7.4** Monitoring + alerts: failed runs, cost, latency — done when an alert fires on a test failure · `claude`
+- [ ] **M7.0** AWS Organization + IAM Identity Center (SSO) for team access, replacing the M3.0 IAM user. **Deferred to launch on purpose:** creating an Organization moves the account to pay-as-you-go and expires free-plan credits immediately — done when people sign in through SSO and the IAM user is removed · `decide`
 - [ ] **M7.5** Privacy policy + terms naming Anthropic and the embedding vendor — done when published · `decide`
 - [ ] **M7.6** Milestone check — done when a public signup → upload → question completes in production · `you`
 
