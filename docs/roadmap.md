@@ -43,6 +43,7 @@ Set in the founder interview on 2026-11-24, after M2 merged.
 | **M3.0** | **Staging deploy** (EKS lite, private, us-west-1) | ⬅ next |
 | M3 | Retrieval core | after M3.0 |
 | V | Validation track: 15 interviews + 1 advisor | in parallel with M3.0–M5 |
+| MT | Threads + multi-agent workspace | after M5 |
 
 M2 baseline (first 3 support evals): 3/3 pass, mean recall 0.96, 0 leaks, ~$0.52 per run on `claude-opus-4-7`.
 
@@ -254,6 +255,26 @@ Prices are approximate on-demand estimates; confirm in the AWS Pricing Calculato
 - [ ] **M5.8** Fix the `policy_doc_parse` `fileRef` path (it imports the missing `core.file_storage` module) — done when its test uses real storage · `claude`
 - [ ] **M5.9** Milestone check — done when uploading a PDF and asking gives a cited answer, and a corrupt file gives a clear error · `you`
 
+## MT: Threads + multi-agent workspace
+
+**Goal:** the workspace from the wireframes (claude.ai canvas "AgentForge Workspace Wireframes", 5 screens): files attached to a thread, several bots in one thread sharing context, bot-to-bot handoffs, thread memory you can see and edit, and an Explain view on every answer. **Moves criteria:** 3 (isolation), 6 (new-user experience). **Needs:** M4 (validated output) and M5 (uploads).
+
+**Rules (from the wireframes):** context is shared inside a thread by default, never across workspaces; every handoff is visible; handoffs are capped per message and count toward the cost cap; a bot may *suggest* a workflow, a person clicks to run it.
+
+- [ ] **MT.1** Who can approve a workflow step: anyone in the workspace, or only some roles (e.g. Adjuster) — done when recorded here · `decide`
+- [ ] **MT.2** Can customers build their own workflows (a builder), or only we do — done when recorded here · `decide`
+- [ ] **MT.3** Can bots start workflows on their own (wireframe default: off) — done when recorded here · `decide`
+- [ ] **MT.4** Thread files: a `thread_files` table linked to M5 `files`; attach/detach API; every bot and workflow in the thread can read them — done when a file added mid-thread is used by the next bot answer · `you`
+- [ ] **MT.5** Context assembler: thread files + earlier answers + workflow results + memory, filtered by per-bot switches (`thread_context_settings`); today only `runs.history_for_thread` exists — done when a test shows a bot with a switch off never receives that context · `you`
+- [ ] **MT.6** Several bots in one message: `@a @b …` fans out to one run per bot, linked by message id; each answer keeps its own Explain and sources; optional "combine answers" — done when two bots answer one message in the studio · `you`
+- [ ] **MT.7** Bot-to-bot handoff: a tool that lets a bot ask another bot a sub-question; depth limit (default 2); each handoff is a `run_events` entry and counts toward the cost cap — done when a handoff loop is stopped at the limit in a test · `you`
+- [ ] **MT.8** Thread memory: a `thread_memory` table, every fact linked to the message or file it came from; removing a fact stops all bots using it — done when a removed fact never reappears in a later prompt · `you`
+- [ ] **MT.9** Workflow suggestion: a bot's answer can carry a [Run /workflow] button with prefilled inputs; nothing runs until a person clicks — done when tested · `you`
+- [ ] **MT.10** Explain panel on every answer: tool calls, sources, cost, time, model, replay, copy run JSON (built from `run_events`) — done when every answer in the studio opens its Explain · `claude`
+- [ ] **MT.11** Studio screens from the wireframes: thread files panel, `@` / `/` picker, side-by-side multi-bot answers, handoff display, "what bots can see" settings, history & audit with filters and export — done when each wireframe screen exists in the studio · `claude`
+- [ ] **MT.12** Isolation tests: per-bot switches respected; no context crosses threads or workspaces — done when added to the cross-tenant suite (M6.8) · `claude`
+- [ ] **MT.13** Milestone check — done when the wireframe story (2 files → bot answer → workflow → file added → 2 bots + handoff → memory edit → audit export) runs end to end on staging · `you`
+
 ## M6: Accounts and tenancy
 
 **Goal:** self-serve signup with strict per-tenant isolation. **Moves criterion:** 3.
@@ -305,7 +326,9 @@ Prices are approximate on-demand estimates; confirm in the AWS Pricing Calculato
 - [ ] **M9.8** Insurance: ≥ 20 golden queries (10 exist), recall ≥ 80% — done when the eval report is recorded · `you`
 - [ ] **M9.9** Support: recall ≥ 80% on hybrid search (20 golden queries already exist) — done when the eval report is recorded · `you`
 - [ ] **M9.10** Legal: system prompt, domain tools, ≥ 20 golden queries — done when recall ≥ 80%. **Lower priority** while insurance leads · `you`
-- [ ] **M9.11** Milestone check — done when the lead vertical's workflows and all evaluated verticals show recall ≥ 80% and `refs_valid` 100% · `you`
+- [ ] **M9.11** Human approval step: the run pauses, only the roles from MT.1 can approve / request info / reject, the note is saved to history — done when an unapproved run never continues · `you`
+- [ ] **M9.12** Step controls: retry one step, or edit a step's input and rerun from there; workflow and bot versions pinned per run — done when a rerun keeps the earlier steps' outputs and history shows both · `you`
+- [ ] **M9.13** Milestone check — done when the lead vertical's workflows and all evaluated verticals show recall ≥ 80% and `refs_valid` 100% · `you`
 
 ## M10: Polish + new-user test
 
@@ -348,4 +371,7 @@ Found in the repo on 2026-11-24.
 | Terraform never applied; defaults cost ~$420–450 a month; `az_count=3` fails in us-west-1; no toggle to turn RDS/ElastiCache off; remote state commented out | `infra/terraform/` | M3.0.2, M3.0.3, M7.1 |
 | Zendesk credentials are global env vars | `connectors/zendesk/client.py`, `core/config.py` | M8.1 |
 | Only the first ticket message is indexed | `connectors/zendesk/mapping.py` | M8.3 |
+| Runs attach images only; no thread-level files | `runs.attachments` | MT.4 |
+| One vertical per run; no multi-bot messages or handoffs | `routes/runs.py`, `core/runtime/loop.py` | MT.6, MT.7 |
+| Thread context is previous turns only (`history_for_thread`); no memory | `core/db/repos/runs.py` | MT.5, MT.8 |
 | Storage: CLAUDE.md says R2, Terraform provisions S3 | `CLAUDE.md`, `infra/terraform/main.tf` | M5.1 |
