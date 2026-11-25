@@ -121,6 +121,25 @@ variable "redis_num_replicas" {
   default     = 1
 }
 
+# ── Cluster add-ons (addons.tf) ────────────────────────────────────
+variable "enable_addons" {
+  description = "Install the AWS Load Balancer Controller and external-secrets into the cluster."
+  type        = bool
+  default     = true
+}
+
+variable "alb_controller_chart_version" {
+  description = "eks/aws-load-balancer-controller chart. Check: helm search repo eks/aws-load-balancer-controller"
+  type        = string
+  default     = "3.7.0"
+}
+
+variable "external_secrets_chart_version" {
+  description = "external-secrets/external-secrets chart. Check: helm search repo external-secrets/external-secrets"
+  type        = string
+  default     = "2.15.0"
+}
+
 # ── DNS / TLS (optional) ───────────────────────────────────────────
 variable "domain_api" {
   description = "FQDN for the public API (used for the ALB ingress + ACM)."

@@ -66,6 +66,10 @@ module "eks" {
 
   enable_irsa = true
 
+  # Module v20 uses EKS access entries and grants nobody admin by default:
+  # without this, whoever runs `apply` gets "Unauthorized" from kubectl/helm.
+  enable_cluster_creator_admin_permissions = true
+
   cluster_addons = {
     coredns = {
       addon_version = null # latest compatible
