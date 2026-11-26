@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       postgres:
-        image: postgres:16-alpine
+        image: pgvector/pgvector:pg16   # same as docker-compose; 0009 needs the vector extension
         env:
           POSTGRES_USER: agentforge
           POSTGRES_PASSWORD: agentforge
