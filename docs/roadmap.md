@@ -222,7 +222,7 @@ Prices are approximate on-demand estimates; confirm in the AWS Pricing Calculato
 **Goal:** one retrieval layer that every data source plugs into, with hybrid search (keyword + embeddings). **Moves criterion:** 1.
 
 - [x] **M3.1** Choose the embedding vendor — ADR 0003 accepted 2026-11-25: Voyage `voyage-4` + `rerank-3`; design in `docs/design/retrieval.md` · `decide`
-- [ ] **M3.2** Search-only eval: run each golden query straight through `ticket_search`, no LLM — done when the keyword baseline (recall per query) is saved, cost $0 · `claude`
+- [x] **M3.2** Search-only eval: run each golden query straight through `ticket_search`, no LLM — done when the keyword baseline (recall per query) is saved, cost $0 · `claude` — 2026-11-25: keyword baseline **mean recall@10 = 0.55** (synonym 0.42, topic 0.61, status 0.53, flag 0.17, none 1.0; 0 leaks), saved in `support/eval/baselines/search_keyword.json`; run with `python -m agentforge.verticals.support.eval.run_search_evals`
 - [ ] **M3.3** CI Postgres image → `pgvector/pgvector:pg16` (CI uses `postgres:16-alpine` today) — done when CI is green with the vector extension available · `claude`
 - [ ] **M3.4** Migration: `sources`, `documents`, `chunks`, with `tenant_id` on every table, an embedding `vector` column and `CREATE EXTENSION vector` — done when migrations apply cleanly on a fresh database · `you`
 - [ ] **M3.5** Embedding client **and reranker** in `core/` behind interfaces, like the LLM router — done when it's unit-tested with a fake client and has one live smoke test · `you`

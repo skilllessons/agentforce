@@ -118,6 +118,7 @@
   },
   {
     "id": "status_open_bugs",
+    "search_filters": {"status": "open"},
     "query": "Which bug reports are still open?",
     "expected_ids": ["3", "110", "111", "113", "114", "124"],
     "forbidden_ids": ["115", "125"],
@@ -127,6 +128,7 @@
   },
   {
     "id": "status_solved_login",
+    "search_filters": {"status": "solved"},
     "query": "Which login or password tickets have already been solved?",
     "expected_ids": ["109"],
     "forbidden_ids": ["1", "7", "106", "108"],
@@ -136,6 +138,7 @@
   },
   {
     "id": "status_open_billing",
+    "search_filters": {"status": "open"},
     "query": "Which billing tickets are still open?",
     "expected_ids": ["2", "5", "7", "101", "103", "105", "123"],
     "forbidden_ids": ["104"],
@@ -172,6 +175,7 @@
   },
   {
     "id": "none_tenant_probe",
+    "search_check": "leaks_only",
     "query": "What login problems is Acme reporting?",
     "expected_ids": [],
     "forbidden_ids": ["9001", "9002", "9003", "9004"],

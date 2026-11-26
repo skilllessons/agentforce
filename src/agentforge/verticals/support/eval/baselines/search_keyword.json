@@ -1,0 +1,341 @@
+{
+  "search": "keyword",
+  "k": 10,
+  "summary": {
+    "mean_recall": 0.55,
+    "recall_by_type": {
+      "synonym": 0.42,
+      "topic": 0.61,
+      "status": 0.53,
+      "flag": 0.17,
+      "none": 1.0
+    },
+    "false_hits": 0,
+    "forbidden_hits": 0,
+    "leaks": 0
+  },
+  "rows": [
+    {
+      "id": "billing_overview",
+      "type": "topic",
+      "recall": 0.44,
+      "missed": [
+        "101",
+        "102",
+        "103",
+        "105",
+        "123"
+      ],
+      "returned": [
+        "110",
+        "104",
+        "2",
+        "5",
+        "7"
+      ],
+      "false_hits": 0,
+      "forbidden_hits": [],
+      "leaks": []
+    },
+    {
+      "id": "synonym_money_back",
+      "type": "synonym",
+      "recall": 1.0,
+      "missed": [],
+      "returned": [
+        "105",
+        "125",
+        "117",
+        "103",
+        "101"
+      ],
+      "false_hits": 0,
+      "forbidden_hits": [],
+      "leaks": []
+    },
+    {
+      "id": "topic_login",
+      "type": "topic",
+      "recall": 0.2,
+      "missed": [
+        "1",
+        "106",
+        "107",
+        "108"
+      ],
+      "returned": [
+        "110",
+        "5",
+        "7"
+      ],
+      "false_hits": 0,
+      "forbidden_hits": [],
+      "leaks": []
+    },
+    {
+      "id": "topic_bugs",
+      "type": "topic",
+      "recall": 0.43,
+      "missed": [
+        "111",
+        "112",
+        "113",
+        "124"
+      ],
+      "returned": [
+        "125",
+        "114",
+        "110",
+        "3",
+        "5"
+      ],
+      "false_hits": 0,
+      "forbidden_hits": [],
+      "leaks": []
+    },
+    {
+      "id": "topic_uploads",
+      "type": "topic",
+      "recall": 1.0,
+      "missed": [],
+      "returned": [
+        "124",
+        "3",
+        "110"
+      ],
+      "false_hits": 0,
+      "forbidden_hits": [],
+      "leaks": []
+    },
+    {
+      "id": "topic_api",
+      "type": "topic",
+      "recall": 1.0,
+      "missed": [],
+      "returned": [
+        "117",
+        "118"
+      ],
+      "false_hits": 0,
+      "forbidden_hits": [],
+      "leaks": []
+    },
+    {
+      "id": "topic_privacy",
+      "type": "topic",
+      "recall": 0.33,
+      "missed": [
+        "120",
+        "6"
+      ],
+      "returned": [
+        "119",
+        "118",
+        "116"
+      ],
+      "false_hits": 0,
+      "forbidden_hits": [],
+      "leaks": []
+    },
+    {
+      "id": "topic_account_admin",
+      "type": "topic",
+      "recall": 1.0,
+      "missed": [],
+      "returned": [
+        "122",
+        "119",
+        "121",
+        "106",
+        "103",
+        "3",
+        "6",
+        "1"
+      ],
+      "false_hits": 0,
+      "forbidden_hits": [],
+      "leaks": []
+    },
+    {
+      "id": "topic_feature_requests",
+      "type": "topic",
+      "recall": 0.5,
+      "missed": [
+        "117"
+      ],
+      "returned": [
+        "116"
+      ],
+      "false_hits": 0,
+      "forbidden_hits": [],
+      "leaks": []
+    },
+    {
+      "id": "synonym_locked_out",
+      "type": "synonym",
+      "recall": 0.6,
+      "missed": [
+        "108",
+        "7"
+      ],
+      "returned": [
+        "1",
+        "119",
+        "122",
+        "113",
+        "107",
+        "106",
+        "103",
+        "101",
+        "3"
+      ],
+      "false_hits": 0,
+      "forbidden_hits": [],
+      "leaks": []
+    },
+    {
+      "id": "synonym_sluggish",
+      "type": "synonym",
+      "recall": 0.0,
+      "missed": [
+        "111"
+      ],
+      "returned": [],
+      "false_hits": 0,
+      "forbidden_hits": [],
+      "leaks": []
+    },
+    {
+      "id": "synonym_churn",
+      "type": "synonym",
+      "recall": 0.0,
+      "missed": [
+        "104"
+      ],
+      "returned": [],
+      "false_hits": 0,
+      "forbidden_hits": [],
+      "leaks": []
+    },
+    {
+      "id": "synonym_billed_twice",
+      "type": "synonym",
+      "recall": 0.5,
+      "missed": [
+        "123"
+      ],
+      "returned": [
+        "104",
+        "2",
+        "7"
+      ],
+      "false_hits": 0,
+      "forbidden_hits": [],
+      "leaks": []
+    },
+    {
+      "id": "status_open_bugs",
+      "type": "status",
+      "recall": 0.17,
+      "missed": [
+        "111",
+        "113",
+        "114",
+        "124",
+        "3"
+      ],
+      "returned": [
+        "110",
+        "5",
+        "1"
+      ],
+      "false_hits": 0,
+      "forbidden_hits": [],
+      "leaks": []
+    },
+    {
+      "id": "status_solved_login",
+      "type": "status",
+      "recall": 1.0,
+      "missed": [],
+      "returned": [
+        "109"
+      ],
+      "false_hits": 0,
+      "forbidden_hits": [],
+      "leaks": []
+    },
+    {
+      "id": "status_open_billing",
+      "type": "status",
+      "recall": 0.43,
+      "missed": [
+        "101",
+        "103",
+        "105",
+        "5"
+      ],
+      "returned": [
+        "123",
+        "2",
+        "7",
+        "1"
+      ],
+      "false_hits": 0,
+      "forbidden_hits": [],
+      "leaks": []
+    },
+    {
+      "id": "flag_escalations",
+      "type": "flag",
+      "recall": 0.0,
+      "missed": [
+        "123"
+      ],
+      "returned": [],
+      "false_hits": 0,
+      "forbidden_hits": [],
+      "leaks": []
+    },
+    {
+      "id": "flag_money_taken",
+      "type": "flag",
+      "recall": 0.33,
+      "missed": [
+        "123",
+        "2"
+      ],
+      "returned": [
+        "105",
+        "103"
+      ],
+      "false_hits": 0,
+      "forbidden_hits": [],
+      "leaks": []
+    },
+    {
+      "id": "none_shipping",
+      "type": "none",
+      "recall": 1.0,
+      "missed": [],
+      "returned": [],
+      "false_hits": 0,
+      "forbidden_hits": [],
+      "leaks": []
+    },
+    {
+      "id": "none_tenant_probe",
+      "type": "none",
+      "recall": 1.0,
+      "missed": [],
+      "returned": [
+        "110",
+        "5",
+        "7"
+      ],
+      "false_hits": 0,
+      "forbidden_hits": [],
+      "leaks": []
+    }
+  ]
+}
