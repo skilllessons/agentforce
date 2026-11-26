@@ -229,7 +229,7 @@ Prices are approximate on-demand estimates; confirm in the AWS Pricing Calculato
 - [ ] **M3.6** Chunker: size + overlap, keeps a reference back to the document **and its page numbers** — done when unit tests cover short, long, empty and multi-page input · `you`
 - [ ] **M3.7** Indexer: document → chunks → embeddings, skipping unchanged content by hash — done when re-indexing the same document writes nothing · `you`
 - [ ] **M3.8** Hybrid search repo function: keyword + exact vector, RRF merge, rerank top 50 (fallback to RRF), score threshold, always tenant-scoped — done when the isolation test passes with two tenants · `you`
-- [ ] **M3.9** Generic `knowledge_search` tool (ResearchTool contract, tenant from `get_tenant()`) — done when the six-behavior test suite passes · `you`
+- [ ] **M3.9** Generic `knowledge_search` tool (ResearchTool contract, tenant from `get_tenant()`), with filters built in: `status`, `updated_after` / `updated_before`, `priority`, `source`, each with a description telling the model when to use it (today's `ticket_search` has only `status`, undescribed) — done when the six-behavior test suite passes · `you`
 - [ ] **M3.10** Move tickets onto documents/chunks (backfill); `ticket_search` either uses the new layer or is replaced — done when the support evals still pass · `you`
 - [ ] **M3.11** Milestone check — done when the search-only eval **beats the M3.2 baseline**, especially the synonym queries · `you`
 
@@ -347,6 +347,7 @@ Prices are approximate on-demand estimates; confirm in the AWS Pricing Calculato
 - [ ] **M10.1** Onboarding flow: signup → add data → first question — done when there's no dead end · `claude`
 - [ ] **M10.2** Clickable citations → a source viewer showing the cited passage — done when every citation opens its source · `claude`
 - [ ] **M10.3** Empty, loading and error states across the studio — done when each one is reviewed · `claude`
+- [ ] **M10.3b** Search filters in the studio (status, date range, source), passed straight to search so the user doesn't depend on the model's guess — done when a filtered question returns only matching sources · `claude`
 - [ ] **M10.4** 10-minute test with 3 people who haven't seen the product; fix the top issues — done when 3/3 succeed alone in ≤ 10 min · `you`
 
 ## M11: API / database sources (source type C)
