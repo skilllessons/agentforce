@@ -221,14 +221,14 @@ Prices are approximate on-demand estimates; confirm in the AWS Pricing Calculato
 
 **Goal:** one retrieval layer that every data source plugs into, with hybrid search (keyword + embeddings). **Moves criterion:** 1.
 
-- [ ] **M3.1** Choose the embedding vendor; Voyage AI is the default candidate — done when ADR 0003 is accepted · `decide`
+- [x] **M3.1** Choose the embedding vendor — ADR 0003 accepted 2026-11-25: Voyage `voyage-4` + `rerank-3`; design in `docs/design/retrieval.md` · `decide`
 - [ ] **M3.2** Search-only eval: run each golden query straight through `ticket_search`, no LLM — done when the keyword baseline (recall per query) is saved, cost $0 · `claude`
 - [ ] **M3.3** CI Postgres image → `pgvector/pgvector:pg16` (CI uses `postgres:16-alpine` today) — done when CI is green with the vector extension available · `claude`
 - [ ] **M3.4** Migration: `sources`, `documents`, `chunks`, with `tenant_id` on every table, an embedding `vector` column and `CREATE EXTENSION vector` — done when migrations apply cleanly on a fresh database · `you`
-- [ ] **M3.5** Embedding client in `core/` behind an interface, like the LLM router — done when it's unit-tested with a fake client and has one live smoke test · `you`
+- [ ] **M3.5** Embedding client **and reranker** in `core/` behind interfaces, like the LLM router — done when it's unit-tested with a fake client and has one live smoke test · `you`
 - [ ] **M3.6** Chunker: size + overlap, keeps a reference back to the document **and its page numbers** — done when unit tests cover short, long, empty and multi-page input · `you`
 - [ ] **M3.7** Indexer: document → chunks → embeddings, skipping unchanged content by hash — done when re-indexing the same document writes nothing · `you`
-- [ ] **M3.8** Hybrid search repo function: keyword rank + vector similarity combined, always tenant-scoped — done when the isolation test passes with two tenants · `you`
+- [ ] **M3.8** Hybrid search repo function: keyword + exact vector, RRF merge, rerank top 50 (fallback to RRF), score threshold, always tenant-scoped — done when the isolation test passes with two tenants · `you`
 - [ ] **M3.9** Generic `knowledge_search` tool (ResearchTool contract, tenant from `get_tenant()`) — done when the six-behavior test suite passes · `you`
 - [ ] **M3.10** Move tickets onto documents/chunks (backfill); `ticket_search` either uses the new layer or is replaced — done when the support evals still pass · `you`
 - [ ] **M3.11** Milestone check — done when the search-only eval **beats the M3.2 baseline**, especially the synonym queries · `you`
@@ -378,6 +378,7 @@ Found in the repo on 2026-11-24.
 | `rate_limit_per_min`, `daily_cost_cap_usd` exist but are unused | `tenants` table | M6.6, M6.7 |
 | Cost cap not checked before synthesis | `core/runtime/loop.py` | M4.6 |
 | No CronJobs for reaper/poller; no deploy job; CI doesn't build the studio image | `infra/helm`, CI | M3.0.6, M3.0.8 |
+| Vector search is an exact scan (no ANN index): add HNSW when a tenant passes ~50k chunks or vector p95 > 100 ms (design D7) | `chunks` table | after M3 |
 | Terraform never applied; defaults cost ~$420–450 a month; `az_count=3` fails in us-west-1; no toggle to turn RDS/ElastiCache off; remote state commented out | `infra/terraform/` | M3.0.2, M3.0.3, M7.1 |
 | Zendesk credentials are global env vars | `connectors/zendesk/client.py`, `core/config.py` | M8.1 |
 | Only the first ticket message is indexed | `connectors/zendesk/mapping.py` | M8.3 |
